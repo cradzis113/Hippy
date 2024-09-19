@@ -1,20 +1,25 @@
 import React, { forwardRef, useRef } from 'react';
 import { Tabs, Tab, Box, Avatar, Typography, useMediaQuery, Divider } from '@mui/material';
 import { useData } from '../context/DataContext';
+import { useSetting } from '../context/SettingContext';
 
 const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Apps', 'Media'];
 
 const RecentChats = forwardRef((props, ref) => {
-    const [value, setValue] = React.useState(0);
     const containerRef = useRef(null);
-    const isDesktop = useMediaQuery('(min-width: 926px)');
+    const [value, setValue] = React.useState(0);
+    
+    const { setBackState } = useSetting()
     const { searchResult, setCurrentChatUser } = useData();
+    
+    const isDesktop = useMediaQuery('(min-width: 926px)');
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
-    
+
     const handleClick = (user) => {
+        setBackState(false)
         setCurrentChatUser(user)
     }
 

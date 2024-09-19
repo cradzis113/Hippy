@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { useData } from './DataContext';
 
 const SocketContext = createContext();
 
@@ -10,27 +9,45 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const { userData } = useAuth();
-    const { userName } = userData.data.user;
-    const { currentChatUser } = useData()
+    const { userName } = userData?.data?.user || {};
+    const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
+    const [hasFocus, setHasFocus] = useState(false);
 
     useEffect(() => {
         const socketInstance = io('http://localhost:3000');
         setSocket(socketInstance);
+    }, []);
 
+    useEffect(() => {
         const handleVisibilityChange = () => {
-            const status = document.hidden ? 'offline' : 'online';
-            socketInstance.emit('updateUserStatus', { userName, status, requiresNotification: true })
+            setIsVisible(document.visibilityState === 'visible');
         };
 
-        socketInstance.on('connect', () => {
-            socketInstance.emit('updateUserStatus', { userName, status: 'online', requiresNotification: false });
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-        });
+        const handleFocus = () => {
+            setHasFocus(true);
+        };
+
+        const handleBlur = () => {
+            setHasFocus(false);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+        window.addEventListener('blur', handleBlur);
 
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('blur', handleBlur);
         };
-    }, [userName, currentChatUser]);
+    }, []);
+
+    useEffect(() => {
+        if (socket && userName) {
+            const status = isVisible && hasFocus ? 'online' : 'offline';
+            socket.emit('updateUserStatus', { userName, status, hasFocus });
+        }
+    }, [isVisible, hasFocus, userName, socket]);
 
     return (
         <SocketContext.Provider value={socket}>

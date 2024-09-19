@@ -41,8 +41,8 @@ const ChatComponent = () => {
             >
                 {Object.keys(currentChatUser).length > 0 && (
                     <>
-                        <UserHeader user={currentChatUser}/>
-                        <MessageList />
+                        <UserHeader user={currentChatUser} />
+                        <MessageList user={currentChatUser} />
                     </>
                 )}
             </Box>

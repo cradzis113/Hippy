@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Avatar, Box } from '@mui/material';
+import { useSocket } from '../context/SocketContext';
 import SearchIcon from '@mui/icons-material/Search';
 import CallIcon from '@mui/icons-material/Call';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { useSocket } from '../context/SocketContext';
 
 const UserHeader = ({ user }) => {
     const socket = useSocket()
@@ -14,15 +14,14 @@ const UserHeader = ({ user }) => {
             setUserStatus(user)
         }
 
+        const handleUserStatusUpdate = (data) => {
+            if (data.userName === user.userName) {
+                setUserStatus(data)
+            }
+        };
+
         if (socket) {
-            const handleUserStatusUpdate = (data) => {
-                if (data.userName === user.userName) {
-                    setUserStatus(data)
-                }
-            };
-
             socket.on('userStatusUpdated', handleUserStatusUpdate);
-
             return () => {
                 socket.off('userStatusUpdated', handleUserStatusUpdate);
             };
@@ -49,7 +48,7 @@ const UserHeader = ({ user }) => {
                             {userStatus.userName}
                         </Typography>
                         <Typography variant="body2" color={userStatus.status === 'online' ? 'primary' : "textSecondary"} fontWeight={500}>
-                            {userStatus.status === 'online' ? userStatus.status : userStatus.lastSeen}
+                            {userStatus.status === 'online' ? userStatus.status : userStatus.lastSeenMessage}
                         </Typography>
                     </Box>
                 </Box>

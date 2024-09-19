@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { grey, blue } from '@mui/material/colors';
 import { Box, TextField, InputAdornment } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -16,7 +16,7 @@ const SearchBar = () => {
 
     const socket = useSocket();
     const { userData } = useAuth();
-    const { setBackState } = useSetting();
+    const { setBackState, backState } = useSetting();
     const { setSearchResult } = useData()
 
     const handleSearch = useCallback((debouncedQuery) => {
@@ -36,17 +36,30 @@ const SearchBar = () => {
 
     const handleInputChange = (event) => {
         setQuery(event.target.value);
+
+        if (event.target.value === '') {
+            return setSearchResult([]);
+        }
+
         setDebouncedQuery(event.target.value);
     };
 
     const handleClearInput = () => {
         setQuery('');
+        setSearchResult([]);
     };
 
     const handleFocus = () => {
         setIsFocused(true);
         setBackState(true);
     };
+
+    useEffect(() => {
+        if (!backState) {
+            setQuery('');
+            setSearchResult([]);
+        }
+    }, [backState])
 
     return (
         <Box sx={{ width: '100%' }}>

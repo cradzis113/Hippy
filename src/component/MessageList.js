@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, InputAdornment, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { green, lightBlue } from '@mui/material/colors';
 import EmojiPicker from 'emoji-picker-react';
@@ -7,25 +7,75 @@ import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import useSendMessage from '../hook/UseSendMessage';
 import useEmojiPicker from '../hook/useEmojiPicker';
+import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 
-const MessageList = () => {
-    const isYou = 'khanh';
+const MessageList = ({ user }) => {
+    const [messages, setMessages] = useState([]);
+
+    const socket = useSocket();
+    const { userData } = useAuth();
     const { message, setMessage, sendMessage } = useSendMessage();
     const { showEmojiPicker, setShowEmojiPicker, emojiPickerRef, handleEmojiClick } = useEmojiPicker();
 
-    const [messages, setMessages] = useState([
-        { id: 1, name: 'khanh', message: 'Xin chào', time: '10:00' },
-        { id: 2, name: 'Tran Thi B', message: 'Chào bạn', time: '11:00' },
-        { id: 3, name: 'Tran Thi A', message: 'Chào bạn c ssssssssssss', time: '12:00' },
-    ]);
+    const currentUser = userData?.data?.user?.userName;
+
+    useEffect(() => {
+        const { otherUsers } = userData?.data?.user || {};
+
+        if (!otherUsers) return setMessages([]);
+
+        const userMessages = otherUsers[user.userName];
+        if (userMessages && user.otherUsers[currentUser]) {
+            setMessages(user.otherUsers[currentUser]);
+        }
+    }, [userData, user, currentUser]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleMessageSent = (data) => {
+            const { otherUsers } = data;
+
+            Object.keys(otherUsers).forEach((userName) => {
+                const newMessages = otherUsers[userName];
+                if (userName === user.userName || userName === currentUser) {
+                    setMessages(newMessages);
+                }
+            });
+        };
+
+        socket.on('messageSent', handleMessageSent);
+
+        return () => {
+            socket.off('messageSent', handleMessageSent);
+        };
+    }, [socket, user, currentUser]);
+
+    const handleSendMessage = () => {
+        if (message.trim()) sendMessage(user.userName);
+    };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden', }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
                 sx={{
                     mt: 2,
                     flexGrow: 1,
                     overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                        width: '5px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        backgroundColor: '#f1f1f1',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        backgroundColor: '#888',
+                        borderRadius: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                        backgroundColor: '#555',
+                    },
                 }}
             >
                 {messages.map((item, index) => (
@@ -36,22 +86,22 @@ const MessageList = () => {
                             padding: 1,
                             display: 'flex',
                             margin: '0 auto',
-                            flexDirection: item.name === isYou ? 'row-reverse' : 'row',
+                            flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
                         }}
                     >
-                        <Tooltip title={item.time[4]} placement='left'>
+                        <Tooltip title={item.time[4]} placement="left">
                             <Box
                                 sx={{
-                                    backgroundColor: item.name === isYou ? green[400] : 'background.paper',
+                                    backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
                                     padding: '6px 12px',
                                     borderRadius: '10px',
                                     maxWidth: '70%',
                                 }}
                             >
                                 <Typography
-                                    variant='body1'
+                                    variant="body1"
                                     sx={{
-                                        color: item.name === isYou ? 'white' : 'black',
+                                        color: item.name === currentUser ? 'white' : 'black',
                                         wordBreak: 'break-all',
                                     }}
                                 >
@@ -74,7 +124,7 @@ const MessageList = () => {
             >
                 <TextField
                     fullWidth
-                    autoComplete='off'
+                    autoComplete="off"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     multiline
@@ -82,7 +132,7 @@ const MessageList = () => {
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            sendMessage(messages, setMessages, isYou);
+                            handleSendMessage();
                         }
                     }}
                     placeholder="Type a message..."
@@ -90,12 +140,12 @@ const MessageList = () => {
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <IconButton onClick={() => setShowEmojiPicker(prev => !prev)}>
+                                    <IconButton onClick={() => setShowEmojiPicker((prev) => !prev)}>
                                         <EmojiEmotionsOutlinedIcon />
                                     </IconButton>
                                 </InputAdornment>
                             ),
-                        },
+                        }
                     }}
                     sx={{
                         '& .MuiOutlinedInput-root': {
@@ -127,7 +177,7 @@ const MessageList = () => {
                 >
                     {message ? (
                         <IconButton
-                            onClick={() => sendMessage(messages, setMessages, isYou)}
+                            onClick={handleSendMessage}
                             sx={{
                                 padding: 2,
                                 backgroundColor: 'transparent',
@@ -160,7 +210,7 @@ const MessageList = () => {
                 </Box>
                 {showEmojiPicker && (
                     <Box ref={emojiPickerRef} sx={{ position: 'absolute', bottom: '100%', left: 0, my: 2 }}>
-                        <EmojiPicker onEmojiClick={event => handleEmojiClick(event, setMessage)} />
+                        <EmojiPicker onEmojiClick={(event) => handleEmojiClick(event, setMessage)} />
                     </Box>
                 )}
             </Box>
