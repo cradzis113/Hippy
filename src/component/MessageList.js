@@ -1,14 +1,15 @@
+import { useAuth } from '../context/AuthContext';
 import React, { useEffect, useState } from 'react';
-import { Box, InputAdornment, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { useSocket } from '../context/SocketContext';
 import { green, lightBlue } from '@mui/material/colors';
+import { Box, InputAdornment, TextField, Typography, IconButton, Tooltip, Chip } from '@mui/material';
+import moment from 'moment';
 import EmojiPicker from 'emoji-picker-react';
-import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import useSendMessage from '../hook/UseSendMessage';
 import useEmojiPicker from '../hook/useEmojiPicker';
-import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
+import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
 
 const MessageList = ({ user }) => {
     const [messages, setMessages] = useState([]);
@@ -21,40 +22,61 @@ const MessageList = ({ user }) => {
     const currentUser = userData?.data?.user?.userName;
 
     useEffect(() => {
-        const { otherUsers } = userData?.data?.user || {};
+        const messageHistory = user?.messageHistory;
 
-        if (!otherUsers) return setMessages([]);
-
-        const userMessages = otherUsers[user.userName];
-        if (userMessages && user.otherUsers[currentUser]) {
-            setMessages(user.otherUsers[currentUser]);
+        if (!messageHistory) {
+            setMessages([]);
+        } else if (!messageHistory[currentUser]) {
+            setMessages([]);
+        } else {
+            setMessages(messageHistory[currentUser]);
         }
-    }, [userData, user, currentUser]);
+
+    }, [, user, currentUser]);
 
     useEffect(() => {
         if (!socket) return;
 
         const handleMessageSent = (data) => {
-            const { otherUsers } = data;
-
-            Object.keys(otherUsers).forEach((userName) => {
-                const newMessages = otherUsers[userName];
-                if (userName === user.userName || userName === currentUser) {
-                    setMessages(newMessages);
-                }
-            });
+            setMessages(data);
         };
 
-        socket.on('messageSent', handleMessageSent);
-
+        socket.current.on('messageSent', handleMessageSent);
         return () => {
-            socket.off('messageSent', handleMessageSent);
+            socket.current.off('messageSent', handleMessageSent);
         };
-    }, [socket, user, currentUser]);
+    }, [socket]);
 
     const handleSendMessage = () => {
         if (message.trim()) sendMessage(user.userName);
     };
+
+    const formatTime = (timestamp) => {
+        if (!timestamp) {
+            return '';
+        }
+
+        const [datePart, timePart] = timestamp.split(' ');
+
+        if (!timePart) {
+            return '';
+        }
+
+        const [hours, minutes] = timePart.split(':');
+        return `${hours}:${minutes}`;
+    };
+
+    const isMoreThanOneDay = (timestamp) => {
+        const currentTime = moment();
+        const inputTime = moment(timestamp);
+        const oneDayLater = inputTime.add(1, 'days');
+
+        if (currentTime.isAfter(oneDayLater)) {
+            return inputTime.format('MMMM D');
+        }
+
+        return null
+    }
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
@@ -79,36 +101,43 @@ const MessageList = ({ user }) => {
                 }}
             >
                 {messages.map((item, index) => (
-                    <Box
-                        key={index}
-                        sx={{
-                            width: 650,
-                            padding: 1,
-                            display: 'flex',
-                            margin: '0 auto',
-                            flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
-                        }}
-                    >
-                        <Tooltip title={item.time[4]} placement="left">
-                            <Box
-                                sx={{
-                                    backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
-                                    padding: '6px 12px',
-                                    borderRadius: '10px',
-                                    maxWidth: '70%',
-                                }}
-                            >
-                                <Typography
-                                    variant="body1"
+                    <Box key={index}>
+                        {isMoreThanOneDay(item.time) && (
+                            <Box sx={{ my: 2, display: 'flex', justifyContent: 'center' }}>
+                                <Chip label={isMoreThanOneDay(item.time)} />
+                            </Box>
+                        )}
+                        <Box
+                            sx={{
+                                width: 650,
+                                padding: 1,
+                                display: 'flex',
+                                margin: '0 auto',
+                                flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
+                            }}
+                        >
+
+                            <Tooltip title={formatTime(item.time)} placement="left">
+                                <Box
                                     sx={{
-                                        color: item.name === currentUser ? 'white' : 'black',
-                                        wordBreak: 'break-all',
+                                        backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
+                                        padding: '6px 12px',
+                                        borderRadius: '10px',
+                                        maxWidth: '70%',
                                     }}
                                 >
-                                    {item.message}
-                                </Typography>
-                            </Box>
-                        </Tooltip>
+                                    <Typography
+                                        variant="body1"
+                                        sx={{
+                                            color: item.name === currentUser ? 'white' : 'black',
+                                            wordBreak: 'break-all',
+                                        }}
+                                    >
+                                        {item.message}
+                                    </Typography>
+                                </Box>
+                            </Tooltip>
+                        </Box>
                     </Box>
                 ))}
             </Box>
@@ -214,6 +243,7 @@ const MessageList = ({ user }) => {
                     </Box>
                 )}
             </Box>
+
         </Box>
     );
 };

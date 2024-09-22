@@ -21,11 +21,12 @@ const SearchBar = () => {
 
     const handleSearch = useCallback((debouncedQuery) => {
         if (socket) {
-            socket.emit('search', debouncedQuery, (error, results) => {
+            socket.current.emit('search', debouncedQuery, (error, results) => {
                 if (error) {
                     console.error('Search error:', error);
                 } else {
-                    const filteredResults = results.filter(item => item.userName !== userData.data.user.userName);
+                    const userName = userData.data ? userData.data.user.userName : userData.userName
+                    const filteredResults = results.filter(item => item.userName !== userName);
                     setSearchResult(filteredResults);
                 }
             });

@@ -7,7 +7,7 @@ import { Container, GlobalStyles, Box } from "@mui/material";
 import { DataProvider } from "./context/DataContext";
 
 function App() {
-  const { loading, isAuthenticated } = useAuth()
+  const { loading, isAuthenticated } = useAuth();
 
   return (
     <Box>
@@ -51,59 +51,3 @@ function App() {
 }
 
 export default App;
-
-// const c = {
-//   khanh: {
-//     email: 'nkhanh0@gmail.com',
-//     userName: 'cradz',
-//     otherUsers: {
-//       hung: [
-//         {
-//           id: '123',
-//           message: 'hello',
-//           user: 'cradz',
-//           time: ''
-//         },
-//         {
-//           id: '124',
-//           message: 'hello 0',
-//           user: 'hung',
-//           time: ''
-//         },
-//       ],
-//       khang: [
-//         {
-//           id: '123',
-//           message: 'hello',
-//           user: 'cradz',
-//           time: ''
-//         },
-//         {
-//           id: '124',
-//           message: 'hello 0',
-//           user: 'hung',
-//           time: ''
-//         },
-//       ]
-//     },
-//     otherRooms: {
-//       room1: [
-//         {
-//           id: '123',
-//           message: 'hello',
-//           user: 'cradz',
-//           time: ''
-//         },
-//         {
-//           id: '124',
-//           message: 'hello 0',
-//           user: 'hung',
-//           time: ''
-//         },
-//       ]
-//     }
-//   },
-//   hung: {
-//     //
-//   }
-// }

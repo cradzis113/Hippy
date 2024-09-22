@@ -1,17 +1,21 @@
-import React, { forwardRef, useRef } from 'react';
+import React, { forwardRef, useRef, useState } from 'react';
 import { Tabs, Tab, Box, Avatar, Typography, useMediaQuery, Divider } from '@mui/material';
 import { useData } from '../context/DataContext';
 import { useSetting } from '../context/SettingContext';
+import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 
 const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Apps', 'Media'];
 
 const RecentChats = forwardRef((props, ref) => {
     const containerRef = useRef(null);
-    const [value, setValue] = React.useState(0);
-    
+    const [value, setValue] = useState(0);
+
+    const socket = useSocket()
+    const { userData } = useAuth()
     const { setBackState } = useSetting()
     const { searchResult, setCurrentChatUser } = useData();
-    
+
     const isDesktop = useMediaQuery('(min-width: 926px)');
 
     const handleChange = (event, newValue) => {
@@ -19,8 +23,15 @@ const RecentChats = forwardRef((props, ref) => {
     };
 
     const handleClick = (user) => {
-        setBackState(false)
-        setCurrentChatUser(user)
+        setBackState(false);
+        setCurrentChatUser(user);
+
+        const userName = userData.data.user.userName
+        if (socket) {
+            socket.current.emit('chatRequest',
+                { recipientUserName: user.userName, recipientSocketId: user.socketId, userName: userName, socketId: socket.current.id }
+            );
+        }
     }
 
     const handleWheel = (event) => {

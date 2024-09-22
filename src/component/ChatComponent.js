@@ -12,7 +12,7 @@ import { useData } from '../context/DataContext';
 const ChatComponent = () => {
     const { backState } = useSetting();
     const { currentChatUser } = useData()
-
+    
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
             <Box

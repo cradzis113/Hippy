@@ -10,18 +10,18 @@ const useSendMessage = () => {
     const { userData } = useAuth()
 
     const sendMessage = (userName) => {
+        let newMessage;
 
-        if (message.trim()) {
-            const newMessage = {
-                recipientUserName: userName,
-                message: message,
-                time: time,
-                senderUserName: userData.data.user.userName
-            };
+        newMessage = {
+            time: time,
+            message: message,
+            recipientUserName: userName,
+            senderUserName: userData?.userName || userData?.data?.user?.userName
+        };
 
-            setMessage('');
-            socket.emit('sendMessage', newMessage)
-        }
+        setMessage('');
+        socket.current.emit('sendMessage', newMessage);
+
     };
 
     return { message, setMessage, sendMessage };

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -7,7 +7,7 @@ const SocketContext = createContext();
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
-    const [socket, setSocket] = useState(null);
+    const socket = useRef(null);
     const { userData } = useAuth();
     const { userName } = userData?.data?.user || {};
     const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
@@ -15,8 +15,16 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         const socketInstance = io('http://localhost:3000');
-        setSocket(socketInstance);
-    }, []);
+        socket.current = (socketInstance);
+
+        socketInstance.on('connect', () => {
+            socketInstance.emit('connectionUpdate', { userName, socketId: socketInstance.id })
+        });
+
+        return () => {
+            socketInstance.close();
+        }
+    }, [userName]);
 
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -43,10 +51,10 @@ export const SocketProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        if (socket && userName) {
-            const status = isVisible && hasFocus ? 'online' : 'offline';
-            socket.emit('updateUserStatus', { userName, status, hasFocus });
-        }
+        if (!socket) return
+
+        const status = isVisible && hasFocus ? 'online' : 'offline';
+        socket.current.emit('updateUserStatus', { userName, status, hasFocus });
     }, [isVisible, hasFocus, userName, socket]);
 
     return (

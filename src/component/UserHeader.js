@@ -21,9 +21,9 @@ const UserHeader = ({ user }) => {
         };
 
         if (socket) {
-            socket.on('userStatusUpdated', handleUserStatusUpdate);
+            socket.current.on('userStatusUpdated', handleUserStatusUpdate);
             return () => {
-                socket.off('userStatusUpdated', handleUserStatusUpdate);
+                socket.current.off('userStatusUpdated', handleUserStatusUpdate);
             };
         }
     }, [socket, user]);
