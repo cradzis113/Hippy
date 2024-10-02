@@ -28,8 +28,8 @@ const RecentChats = forwardRef((props, ref) => {
 
         const userName = userData.data.user.userName
         if (socket) {
-            socket.current.emit('chatRequest',
-                { recipientUserName: user.userName, recipientSocketId: user.socketId, userName: userName, socketId: socket.current.id }
+            socket.current.emit('chatEvent',
+                { recipientUserName: user.userName, recipientSocketId: user.socketId, userName: userName, socketId: socket.current.id, type: 'chatRequest' }
             );
         }
     }

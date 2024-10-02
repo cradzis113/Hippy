@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Avatar, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
+import { grey } from '@mui/material/colors';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
-import { grey } from '@mui/material/colors';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { useSocket } from '../context/SocketContext';
 
 const n = [
     {
@@ -43,6 +46,62 @@ const n = [
 ];
 
 const Conversation = () => {
+    const socket = useSocket()
+    const { userData } = useAuth()
+    const { messageHistory } = userData?.data?.user
+    const { setCurrentChatUser, setSearchResult } = useData();
+    const [c, setC] = useState('')
+
+    const formatTime = (timestamp) => {
+        if (!timestamp) {
+            return '';
+        }
+
+        const [datePart, timePart] = timestamp.split(' ');
+
+        if (!timePart) {
+            return '';
+        }
+
+        const [hours, minutes] = timePart.split(':');
+        return `${hours}:${minutes}`;
+    };
+
+    const handleClick = (userName) => {
+        if (socket) {
+            socket.current.emit('search', userName, (error, results) => {
+                if (error) {
+                    console.error('Search error:', error);
+                } else {
+                    setCurrentChatUser(results[0]);
+
+                    const userName = userData.data.user.userName
+                    socket.current.emit('chatEvent',
+                        { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: userName, socketId: socket.current.id, type: 'chatRequest' }
+                    );
+                }
+            })
+        }
+    }
+
+    useEffect(() => {
+        if (!socket.current) return;
+
+        const handleMessageSent = (data) => {
+            console.log(data)
+            setC(data)
+        }
+
+        socket.current.on('connect', () => {
+            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' })
+        })
+
+        socket.current.on('cee', handleMessageSent);
+        return () => {
+            socket.current.off('cee', handleMessageSent);
+        };
+    }, [socket.current])
+
     return (
         <Box
             sx={{
@@ -65,68 +124,75 @@ const Conversation = () => {
             }}
         >
             <List>
-                {n.map((item, index) => (
-                    <ListItem
-                        key={index}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            transition: 'background-color 0.3s ease',
-                            '&:hover': {
-                                backgroundColor: '#f0f0f0',
-                                cursor: 'pointer',
-                            },
-                        }}>
-                        <ListItemAvatar>
-                            <Avatar alt={item.name} src={item.url} sx={{ width: 54, height: 54, mr: 2 }} />
-                        </ListItemAvatar>
-                        <ListItemText
-                            primary={
-                                <Box display="flex" justifyContent="space-between">
+                {Object.keys(messageHistory).map((userName, index) => {
+                    const userMessages = messageHistory[userName];
+                    const lastMessage = userMessages[userMessages.length - 1];
+
+                    return (
+                        <ListItem
+                            key={index}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                transition: 'background-color 0.3s ease',
+                                '&:hover': {
+                                    backgroundColor: '#f0f0f0',
+                                    cursor: 'pointer',
+                                },
+                            }}
+                            onClick={() => handleClick(userName)}
+                        >
+                            <ListItemAvatar>
+                                <Avatar alt={userName} src={lastMessage.url} sx={{ width: 54, height: 54, mr: 2 }} />
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={
+                                    <Box display="flex" justifyContent="space-between">
+                                        <Typography
+                                            variant="body1"
+                                            component="span"
+                                            sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {userName}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {lastMessage.seen ? (
+                                                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
+                                            ) : (
+                                                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
+                                            )}
+                                            <Typography
+                                                variant="caption"
+                                                component="span"
+                                                sx={{ color: 'text.secondary', ml: 0.5 }}
+                                            >
+                                                {formatTime(lastMessage.time)}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                }
+                                secondary={
                                     <Typography
-                                        variant="body1"
-                                        component="span"
+                                        variant="body2"
+                                        color="text.secondary"
                                         sx={{
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
-                                            fontWeight: 600
                                         }}
                                     >
-                                        {item.name}
+                                        {c.senderUserName === userName ? String(c.message) : String(lastMessage.message)}
                                     </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {item.seen ? (
-                                            <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
-                                        ) : (
-                                            <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
-                                        )}
-                                        <Typography
-                                            variant="caption"
-                                            component="span"
-                                            sx={{ color: 'text.secondary', ml: 0.5 }}
-                                        >
-                                            {item.time}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            }
-                            secondary={
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    {item.message}
-                                </Typography>
-                            }
-                        />
-                    </ListItem>
-                ))}
+                                }
+                            />
+                        </ListItem>
+                    );
+                })}
             </List>
         </Box>
     );

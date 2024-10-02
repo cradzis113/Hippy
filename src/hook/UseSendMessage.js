@@ -20,8 +20,8 @@ const useSendMessage = () => {
         };
 
         setMessage('');
-        socket.current.emit('sendMessage', newMessage);
-
+        socket.current.emit('privateChat', newMessage);
+        socket.current.emit('sendMessage', newMessage)
     };
 
     return { message, setMessage, sendMessage };

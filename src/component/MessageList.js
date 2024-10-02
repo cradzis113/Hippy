@@ -24,24 +24,68 @@ const MessageList = ({ user }) => {
     useEffect(() => {
         const messageHistory = user?.messageHistory;
 
-        if (!messageHistory) {
+        if (!messageHistory || !messageHistory[currentUser]) {
             setMessages([]);
-        } else if (!messageHistory[currentUser]) {
-            setMessages([]);
-        } else {
-            setMessages(messageHistory[currentUser]);
+            return;
         }
 
-    }, [, user, currentUser]);
+        const groupedMessages = {};
+
+        messageHistory[currentUser].forEach((msg) => {
+            const dateKey = moment(msg.time).format('YYYY-MM-DD');
+
+            if (!groupedMessages[dateKey]) {
+                groupedMessages[dateKey] = {
+                    earliestTime: msg.time,
+                    messages: [],
+                };
+            }
+            if (msg.time < groupedMessages[dateKey].earliestTime) {
+                groupedMessages[dateKey].earliestTime = msg.time;
+            }
+            groupedMessages[dateKey].messages.push(msg);
+
+        });
+
+        const formattedMessages = Object.keys(groupedMessages).map(date => ({
+            time: groupedMessages[date].earliestTime,
+            messages: groupedMessages[date].messages,
+        }));
+
+        setMessages(formattedMessages);
+    }, [user, currentUser]);
 
     useEffect(() => {
         if (!socket) return;
 
         const handleMessageSent = (data) => {
-            setMessages(data);
+
+            const groupedMessages = {};
+            data.forEach((msg) => {
+                const dateKey = moment(msg.time).format('YYYY-MM-DD');
+
+                if (!groupedMessages[dateKey]) {
+                    groupedMessages[dateKey] = {
+                        earliestTime: msg.time,
+                        messages: [],
+                    };
+                }
+                if (msg.time < groupedMessages[dateKey].earliestTime) {
+                    groupedMessages[dateKey].earliestTime = msg.time;
+                }
+
+                groupedMessages[dateKey].messages.push(msg);
+            });
+
+            const formattedMessages = Object.keys(groupedMessages).map(date => ({
+                time: groupedMessages[date].earliestTime,
+                messages: groupedMessages[date].messages,
+            }));
+            setMessages(formattedMessages);
         };
 
         socket.current.on('messageSent', handleMessageSent);
+        
         return () => {
             socket.current.off('messageSent', handleMessageSent);
         };
@@ -66,18 +110,6 @@ const MessageList = ({ user }) => {
         return `${hours}:${minutes}`;
     };
 
-    const isMoreThanOneDay = (timestamp) => {
-        const currentTime = moment();
-        const inputTime = moment(timestamp);
-        const oneDayLater = inputTime.add(1, 'days');
-
-        if (currentTime.isAfter(oneDayLater)) {
-            return inputTime.format('MMMM D');
-        }
-
-        return null
-    }
-
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -85,59 +117,51 @@ const MessageList = ({ user }) => {
                     mt: 2,
                     flexGrow: 1,
                     overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                        width: '5px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        backgroundColor: '#f1f1f1',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: '#888',
-                        borderRadius: '10px',
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': {
-                        backgroundColor: '#555',
-                    },
+                    position: 'relative',
+                    '&::-webkit-scrollbar': { width: '5px' },
+                    '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
+                    '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {messages.map((item, index) => (
+                {messages.map((dayGroup, index) => (
                     <Box key={index}>
-                        {isMoreThanOneDay(item.time) && (
-                            <Box sx={{ my: 2, display: 'flex', justifyContent: 'center' }}>
-                                <Chip label={isMoreThanOneDay(item.time)} />
-                            </Box>
-                        )}
-                        <Box
-                            sx={{
-                                width: 650,
-                                padding: 1,
-                                display: 'flex',
-                                margin: '0 auto',
-                                flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
-                            }}
-                        >
-
-                            <Tooltip title={formatTime(item.time)} placement="left">
-                                <Box
-                                    sx={{
-                                        backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
-                                        padding: '6px 12px',
-                                        borderRadius: '10px',
-                                        maxWidth: '70%',
-                                    }}
-                                >
-                                    <Typography
-                                        variant="body1"
+                        <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                            <Chip label={moment(dayGroup.time).format('MMMM D')} />
+                        </Box>
+                        {dayGroup.messages.map((item, msgIndex) => (
+                            <Box
+                                key={msgIndex}
+                                sx={{
+                                    width: 650,
+                                    padding: 1,
+                                    display: 'flex',
+                                    margin: '0 auto',
+                                    flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
+                                }}
+                            >
+                                <Tooltip title={formatTime(item.time)} placement="left">
+                                    <Box
                                         sx={{
-                                            color: item.name === currentUser ? 'white' : 'black',
-                                            wordBreak: 'break-all',
+                                            backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
+                                            padding: '6px 12px',
+                                            borderRadius: '10px',
+                                            maxWidth: '70%',
                                         }}
                                     >
-                                        {item.message}
-                                    </Typography>
-                                </Box>
-                            </Tooltip>
-                        </Box>
+                                        <Typography
+                                            variant="body1"
+                                            sx={{
+                                                color: item.name === currentUser ? 'white' : 'black',
+                                                wordBreak: 'break-all',
+                                            }}
+                                        >
+                                            {item.message}
+                                        </Typography>
+                                    </Box>
+                                </Tooltip>
+                            </Box>
+                        ))}
                     </Box>
                 ))}
             </Box>
@@ -243,7 +267,6 @@ const MessageList = ({ user }) => {
                     </Box>
                 )}
             </Box>
-
         </Box>
     );
 };
