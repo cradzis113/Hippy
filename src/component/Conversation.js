@@ -1,56 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
+import { Avatar, Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
-import DoneIcon from '@mui/icons-material/Done';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useSocket } from '../context/SocketContext';
-
-const n = [
-    {
-        url: "https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg",
-        name: "Bình",
-        message: "Một cảnh bình minh tuyệt đẹp với ánh sáng vàng ấm áp trên biển.",
-        time: "11:30 AM",
-        seen: true // Marked as seen
-    },
-    {
-        url: "https://images.pexels.com/photos/2345678/pexels-photo-2345678.jpeg",
-        name: "Khang",
-        message: "Cảnh rừng xanh tươi mát với ánh sáng mặt trời chiếu qua những tán lá.",
-        time: "Yesterday",
-        seen: false // Not seen
-    },
-    {
-        url: "https://images.pexels.com/photos/3456789/pexels-photo-3456789.jpeg",
-        name: "Hào",
-        message: "Toàn cảnh thành phố về đêm với những ánh đèn sáng rực rỡ.",
-        time: "2:45 PM",
-        seen: true // Marked as seen
-    },
-    {
-        url: "https://images.pexels.com/photos/4567890/pexels-photo-4567890.jpeg",
-        name: "Duy",
-        message: "Cận cảnh một bông hoa màu sắc tươi sáng, nổi bật với chi tiết tinh tế.",
-        time: "3 days ago",
-        seen: false // Not seen
-    },
-    {
-        url: "https://images.pexels.com/photos/4567890/pexels-photo-4567890.jpeg",
-        name: "Duy",
-        message: "Cận cảnh một bông hoa màu sắc tươi sáng, nổi bật với chi tiết tinh tế.",
-        time: "3 days ago",
-        seen: false // Not seen
-    },
-];
+import DoneIcon from '@mui/icons-material/Done';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 
 const Conversation = () => {
     const socket = useSocket()
     const { userData } = useAuth()
-    const { messageHistory } = userData?.data?.user
-    const { setCurrentChatUser, setSearchResult } = useData();
-    const [c, setC] = useState('')
+    const { setCurrentChatUser } = useData();
+
+    const { messageHistory: initialMessageHistory, userName: currentUserName } = userData?.data?.user;
+    const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
+    const [newMessage, setNewMessage] = useState('');
 
     const formatTime = (timestamp) => {
         if (!timestamp) {
@@ -74,10 +38,8 @@ const Conversation = () => {
                     console.error('Search error:', error);
                 } else {
                     setCurrentChatUser(results[0]);
-
-                    const userName = userData.data.user.userName
                     socket.current.emit('chatEvent',
-                        { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: userName, socketId: socket.current.id, type: 'chatRequest' }
+                        { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: currentUserName, socketId: socket.current.id, type: 'chatRequest' }
                     );
                 }
             })
@@ -87,18 +49,29 @@ const Conversation = () => {
     useEffect(() => {
         if (!socket.current) return;
 
-        const handleMessageSent = (data) => {
-            console.log(data)
-            setC(data)
+        const notificationData = (data) => {
+            setNewMessage(data)
+        }
+
+        const messageHistory = (data) => {
+            setChatMessageHistory(data)
+        }
+
+        const readMessages = (data) => {
+            setChatMessageHistory(data.messageHistory)
         }
 
         socket.current.on('connect', () => {
             socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' })
         })
 
-        socket.current.on('cee', handleMessageSent);
+        socket.current.on('notification', notificationData);
+        socket.current.on('messageHistoryUpdate', messageHistory);
+        socket.current.on('readMessages', readMessages);
+
         return () => {
-            socket.current.off('cee', handleMessageSent);
+            socket.current.off('notification', notificationData);
+            socket.current.off('messageHistoryUpdate', messageHistory);
         };
     }, [socket.current])
 
@@ -124,9 +97,19 @@ const Conversation = () => {
             }}
         >
             <List>
-                {Object.keys(messageHistory).map((userName, index) => {
-                    const userMessages = messageHistory[userName];
+                {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
+                    const userMessages = chatMessageHistory[userName];
                     const lastMessage = userMessages[userMessages.length - 1];
+                    const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
+                    let unSeenMessageCount = 0;
+
+                    if (userMessages.length === 1) {
+                        unSeenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
+                    }
+
+                    if (firstSeenMessageIndex !== -1) {
+                        unSeenMessageCount = userMessages.slice(firstSeenMessageIndex + 1).length;
+                    }
 
                     return (
                         <ListItem
@@ -161,11 +144,12 @@ const Conversation = () => {
                                             {userName}
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {lastMessage.seen ? (
+                                            {lastMessage.senderUserName === currentUserName && (lastMessage.seen ? (
                                                 <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
                                             ) : (
                                                 <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
-                                            )}
+                                            ))}
+
                                             <Typography
                                                 variant="caption"
                                                 component="span"
@@ -177,24 +161,28 @@ const Conversation = () => {
                                     </Box>
                                 }
                                 secondary={
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        sx={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                        }}
-                                    >
-                                        {c.senderUserName === userName ? String(c.message) : String(lastMessage.message)}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} component={'span'}>
+                                        <Typography
+                                            variant="body1"
+                                            color="text.secondary"
+                                            component={'span'}
+                                            sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage.message)}
+                                        </Typography>
+                                        {lastMessage.senderUserName !== currentUserName && <Badge badgeContent={unSeenMessageCount} color='primary' sx={{ mr: 1 }} />}
+                                    </Box>
                                 }
                             />
                         </ListItem>
                     );
                 })}
             </List>
-        </Box>
+        </Box >
     );
 };
 
