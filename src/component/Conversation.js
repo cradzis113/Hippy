@@ -12,7 +12,9 @@ const Conversation = () => {
     const { userData } = useAuth()
     const { setCurrentChatUser } = useData();
 
-    const { messageHistory: initialMessageHistory, userName: currentUserName } = userData?.data?.user;
+    const initialMessageHistory = userData?.data?.user?.messageHistory || {};
+    const currentUserName = userData?.data?.user?.userName || '';
+
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
     const [newMessage, setNewMessage] = useState('');
 
@@ -54,7 +56,7 @@ const Conversation = () => {
         }
 
         const messageHistory = (data) => {
-            setChatMessageHistory(data)
+            setChatMessageHistory(data) 
         }
 
         const readMessages = (data) => {
@@ -72,6 +74,7 @@ const Conversation = () => {
         return () => {
             socket.current.off('notification', notificationData);
             socket.current.off('messageHistoryUpdate', messageHistory);
+            socket.current.off('readMessages', readMessages);
         };
     }, [socket.current])
 
