@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Tabs, Tab, Box, Avatar, Typography, useMediaQuery, Divider } from '@mui/material';
 import { useData } from '../context/DataContext';
 import { useSetting } from '../context/SettingContext';
@@ -14,7 +14,7 @@ const RecentChats = forwardRef((props, ref) => {
     const socket = useSocket()
     const { userData } = useAuth()
     const { setBackState } = useSetting()
-    const { searchResult, setCurrentChatUser } = useData();
+    const { searchResult, setCurrentChatUser, setMessageBackState } = useData();
 
     const isDesktop = useMediaQuery('(min-width: 926px)');
 
@@ -40,6 +40,18 @@ const RecentChats = forwardRef((props, ref) => {
             containerRef.current.scrollLeft += event.deltaY * scrollSpeed;
         }
     };
+
+    useEffect(() => {
+        if (socket.current) {
+            socket.current.on('messageBackState', (message) => {
+                setMessageBackState(message)
+            });
+
+            return () => {
+                socket.current.off('messageBackState');
+            };
+        }
+    }, [socket.current]);
 
     return (
         <Box sx={{ width: '100%', bgcolor: 'background.paper' }} {...props} ref={ref}>

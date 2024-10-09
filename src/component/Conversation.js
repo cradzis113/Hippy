@@ -10,12 +10,12 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 const Conversation = () => {
     const socket = useSocket()
     const { userData } = useAuth()
-    const { setCurrentChatUser } = useData();
+    const { setCurrentChatUser, messageBackState } = useData();
 
     const initialMessageHistory = userData?.data?.user?.messageHistory || {};
     const currentUserName = userData?.data?.user?.userName || '';
 
-    const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
+    const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory || m);
     const [newMessage, setNewMessage] = useState('');
 
     const formatTime = (timestamp) => {
@@ -56,7 +56,7 @@ const Conversation = () => {
         }
 
         const messageHistory = (data) => {
-            setChatMessageHistory(data) 
+            setChatMessageHistory(data)
         }
 
         const readMessages = (data) => {
@@ -77,6 +77,12 @@ const Conversation = () => {
             socket.current.off('readMessages', readMessages);
         };
     }, [socket.current])
+
+    useEffect(() => {
+        if (Object.keys(messageBackState).length > 0) {
+            setChatMessageHistory(messageBackState)
+        }
+    }, [messageBackState])
 
     return (
         <Box
@@ -105,7 +111,6 @@ const Conversation = () => {
                     const lastMessage = userMessages[userMessages.length - 1];
                     const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
                     let unSeenMessageCount = 0;
-
                     if (userMessages.length === 1) {
                         unSeenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
                     }
@@ -113,6 +118,12 @@ const Conversation = () => {
                     if (firstSeenMessageIndex !== -1) {
                         unSeenMessageCount = userMessages.slice(firstSeenMessageIndex + 1).length;
                     }
+
+                    if (firstSeenMessageIndex === -1) {
+                        unSeenMessageCount = userMessages.length
+                    }
+
+                    // console.log(userMessages)
 
                     return (
                         <ListItem

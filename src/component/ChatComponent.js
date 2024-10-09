@@ -1,4 +1,4 @@
-import React from 'react';
+import React  from 'react';
 import ChatHeader from './ChatHeader';
 import Conversation from './Conversation';
 import RecentChats from './RecentChats';
@@ -12,7 +12,7 @@ import { useData } from '../context/DataContext';
 const ChatComponent = () => {
     const { backState } = useSetting();
     const { currentChatUser } = useData()
-    
+
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
             <Box
@@ -27,7 +27,7 @@ const ChatComponent = () => {
             >
                 <ChatHeader />
                 {!backState && <Conversation />}
-                <Fade in={backState} timeout={backState ? 500 : 0}>
+                <Fade in={backState} >
                     <RecentChats />
                 </Fade>
             </Box>
