@@ -15,7 +15,7 @@ const Conversation = () => {
     const initialMessageHistory = userData?.data?.user?.messageHistory || {};
     const currentUserName = userData?.data?.user?.userName || '';
 
-    const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory || m);
+    const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
     const [newMessage, setNewMessage] = useState('');
 
     const formatTime = (timestamp) => {
@@ -111,6 +111,7 @@ const Conversation = () => {
                     const lastMessage = userMessages[userMessages.length - 1];
                     const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
                     let unSeenMessageCount = 0;
+
                     if (userMessages.length === 1) {
                         unSeenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
                     }
@@ -122,8 +123,6 @@ const Conversation = () => {
                     if (firstSeenMessageIndex === -1) {
                         unSeenMessageCount = userMessages.length
                     }
-
-                    // console.log(userMessages)
 
                     return (
                         <ListItem
@@ -175,7 +174,13 @@ const Conversation = () => {
                                     </Box>
                                 }
                                 secondary={
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} component={'span'}>
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}
+                                        component={'span'}>
                                         <Typography
                                             variant="body1"
                                             color="text.secondary"
