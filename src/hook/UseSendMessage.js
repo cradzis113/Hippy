@@ -2,6 +2,7 @@ import moment from 'moment';
 import { useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const useSendMessage = () => {
     const [message, setMessage] = useState('');
@@ -17,6 +18,7 @@ const useSendMessage = () => {
         let newMessage;
 
         newMessage = {
+            id: uuidv4(), 
             time: time,
             message: message,
             recipientUserName: userName,

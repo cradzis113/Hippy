@@ -39,6 +39,7 @@ const Conversation = () => {
                 if (error) {
                     console.error('Search error:', error);
                 } else {
+                    console.log(results)
                     setCurrentChatUser(results[0]);
                     socket.current.emit('chatEvent',
                         { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: currentUserName, socketId: socket.current.id, type: 'chatRequest' }
@@ -139,7 +140,7 @@ const Conversation = () => {
                             onClick={() => handleClick(userName)}
                         >
                             <ListItemAvatar>
-                                <Avatar alt={userName} src={lastMessage.url} sx={{ width: 54, height: 54, mr: 2 }} />
+                                <Avatar alt={userName} src={lastMessage?.url} sx={{ width: 54, height: 54, mr: 2 }} />
                             </ListItemAvatar>
                             <ListItemText
                                 primary={
@@ -157,7 +158,7 @@ const Conversation = () => {
                                             {userName}
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {lastMessage.senderUserName === currentUserName && (lastMessage.seen ? (
+                                            {lastMessage?.senderUserName === currentUserName && (lastMessage?.seen ? (
                                                 <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
                                             ) : (
                                                 <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
@@ -168,7 +169,7 @@ const Conversation = () => {
                                                 component="span"
                                                 sx={{ color: 'text.secondary', ml: 0.5 }}
                                             >
-                                                {formatTime(lastMessage.time)}
+                                                {formatTime(lastMessage?.time)}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -191,9 +192,9 @@ const Conversation = () => {
                                                 whiteSpace: 'nowrap',
                                             }}
                                         >
-                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage.message)}
+                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage?.message)}
                                         </Typography>
-                                        {lastMessage.senderUserName !== currentUserName && <Badge badgeContent={unSeenMessageCount} color='primary' sx={{ mr: 1 }} />}
+                                        {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unSeenMessageCount} color='primary' sx={{ mr: 1 }} />}
                                     </Box>
                                 }
                             />
@@ -204,6 +205,5 @@ const Conversation = () => {
         </Box >
     );
 };
-
 
 export default Conversation;

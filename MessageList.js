@@ -51,7 +51,7 @@ const MessageList = ({ user }) => {
         }
 
         const groupedMessages = {};
-
+        
         messageHistory[currentUser].forEach((msg) => {
             const dateKey = moment(msg.time).format('YYYY-MM-DD');
 
@@ -65,7 +65,6 @@ const MessageList = ({ user }) => {
                 groupedMessages[dateKey].earliestTime = msg.time;
             }
             groupedMessages[dateKey].messages.push(msg);
-
         });
 
         const formattedMessages = Object.keys(groupedMessages).map(date => ({
@@ -260,7 +259,6 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {console.log(messages)}
                 {messages.map((dayGroup, index) => (
                     <Box key={index}>
                         <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
@@ -277,7 +275,7 @@ const MessageList = ({ user }) => {
                                     flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
                                 }}
                             >
-                                {item.revoked && item.revoked.revokedBoth && !item.revoked.revokedFromYou ? (
+                                {item.revoke ? (
                                     <Box
                                         sx={{
                                             backgroundColor: item.name === currentUser ? green[400] : 'background.paper',
@@ -293,7 +291,7 @@ const MessageList = ({ user }) => {
                                                 wordBreak: 'break-all',
                                             }}
                                         >
-                                            {item.revoked.revokedBoth === currentUser ? 'Bạn đã thu hồi một tin nhắn' : `${item.revoked.revokedBoth} đã thu hồi một tin nhắn`}
+                                            {item.revoke === currentUser ? 'Bạn đã thu hồi một tin nhắn' : `${item.revoke} đã thu hồi một tin nhắn`}
                                         </Typography>
                                     </Box>
                                 ) : (
