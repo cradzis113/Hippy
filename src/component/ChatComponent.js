@@ -1,9 +1,9 @@
-import React  from 'react';
+import React from 'react';
 import ChatHeader from './ChatHeader';
 import Conversation from './Conversation';
 import RecentChats from './RecentChats';
 import UserHeader from './UserHeader';
-import MessageList from './MessageList';
+import MessageList from '../component/Message/MessageList';
 import { useSetting } from '../context/SettingContext';
 import { Box, Fade, } from '@mui/material';
 import { green } from '@mui/material/colors';

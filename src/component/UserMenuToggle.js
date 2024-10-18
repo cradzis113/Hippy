@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSetting } from '../context/SettingContext';
-import { Box, Menu, MenuItem, IconButton, ListItemIcon, ListItemText } from '@mui/material';
+import { Menu, MenuItem, IconButton, ListItemIcon, ListItemText } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import InboxIcon from '@mui/icons-material/Inbox';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
@@ -25,7 +25,7 @@ const UserMenuToggle = () => {
   };
 
   return (
-    <Box>
+    <>
       <IconButton
         aria-controls={open ? 'icon-text-menu' : undefined}
         aria-haspopup="true"
@@ -83,7 +83,7 @@ const UserMenuToggle = () => {
           <ListItemText primary="Log Out" />
         </MenuItem>
       </Menu>
-    </Box>
+    </>
   );
 };
 

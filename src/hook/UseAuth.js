@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import fetchAPI from '../../utils/fetchApi';
 import { useAuth } from '../context/AuthContext';
+import fetchAPI from '../utils/FetchApi';
 
 const UseAuth = () => {
   const [email, setEmail] = useState('');

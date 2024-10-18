@@ -3,14 +3,14 @@ import ChatComponent from "./component/ChatComponent";
 import { useAuth } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 import { SettingProvider } from "./context/SettingContext";
-import { Container, GlobalStyles, Box } from "@mui/material";
+import { Container, GlobalStyles } from "@mui/material";
 import { DataProvider } from "./context/DataContext";
 
 function App() {
   const { loading, isAuthenticated } = useAuth();
 
   return (
-    <Box>
+    <>
       <GlobalStyles
         styles={{
           '*': {
@@ -30,9 +30,7 @@ function App() {
         }}
       />
       {loading ? (
-        <Box>
-
-        </Box>
+        <></>
       ) : isAuthenticated ? (
         <DataProvider>
           <SocketProvider>
@@ -46,7 +44,7 @@ function App() {
           <AuthPage />
         </Container>
       )}
-    </Box>
+    </>
   );
 }
 

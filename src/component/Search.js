@@ -4,7 +4,7 @@ import { Box, TextField, InputAdornment } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import CloseSharpIcon from '@mui/icons-material/CloseSharp';
 import SearchIcon from '@mui/icons-material/Search';
-import useDebounce from '../../utils/debounce';
+import useDebounce from '../utils/debounce';
 import { useSetting } from '../context/SettingContext';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
@@ -63,7 +63,7 @@ const SearchBar = () => {
     }, [backState])
 
     return (
-        <Box sx={{ width: '100%' }}>
+        <Box width='100%'>
             <TextField
                 fullWidth
                 placeholder='Search'

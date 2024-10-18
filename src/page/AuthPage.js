@@ -16,9 +16,9 @@ const AuthPage = () => {
   } = UseAuth();
 
   return (
-    <Box>
+    <>
       {responseStatus ? (
-        <Box>
+        <>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 400 }}>
             <Typography variant='h5' gutterBottom fontWeight='bold'>{email}</Typography>
             <Typography variant='body1' textAlign='center'>{responseMessage}</Typography>
@@ -46,7 +46,7 @@ const AuthPage = () => {
               },
             }}
           />
-        </Box>
+        </>
       ) : (
         <Box sx={{
           display: 'flex',
@@ -109,7 +109,7 @@ const AuthPage = () => {
           </Box>
         </Box>
       )}
-    </Box>
+    </>
   );
 };
 

@@ -37,7 +37,7 @@ const UserHeader = ({ user }) => {
             <Toolbar>
                 <Box display="flex" alignItems="center" flexGrow={1}>
                     <Avatar
-                        src="https://via.placeholder.com/40" // Replace with actual avatar URL
+                        src="https://via.placeholder.com/40"
                         alt="User avatar"
                         sx={{ width: 40, height: 40, mr: 2 }}
                     >

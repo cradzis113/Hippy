@@ -39,7 +39,6 @@ const Conversation = () => {
                 if (error) {
                     console.error('Search error:', error);
                 } else {
-                    console.log(results)
                     setCurrentChatUser(results[0]);
                     socket.current.emit('chatEvent',
                         { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: currentUserName, socketId: socket.current.id, type: 'chatRequest' }
@@ -50,7 +49,7 @@ const Conversation = () => {
     }
 
     useEffect(() => {
-        if (!socket.current) return;
+        if (!socket.current || !userData?.data?.user) return;
 
         const notificationData = (data) => {
             setNewMessage(data)

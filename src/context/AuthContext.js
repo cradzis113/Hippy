@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import fetchAPI from '../../utils/fetchApi';
+import fetchAPI from '../utils/FetchApi';
 import Cookies from 'js-cookie';
 
 const AuthContext = createContext();
