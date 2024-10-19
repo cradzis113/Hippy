@@ -5,7 +5,7 @@ import RecentChats from './RecentChats';
 import UserHeader from './UserHeader';
 import MessageList from '../component/Message/MessageList';
 import { useSetting } from '../context/SettingContext';
-import { Box, Fade, } from '@mui/material';
+import { Box, Fade } from '@mui/material';
 import { green } from '@mui/material/colors';
 import { useData } from '../context/DataContext';
 
@@ -27,7 +27,7 @@ const ChatComponent = () => {
             >
                 <ChatHeader />
                 {!backState && <Conversation />}
-                <Fade in={backState} >
+                <Fade in={backState} timeout={{ enter: 300, exit: 0 }}>
                     <RecentChats />
                 </Fade>
             </Box>

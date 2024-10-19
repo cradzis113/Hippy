@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import {
-    Box, IconButton, Popper, Tooltip, Popover, List, ListItem, ListItemButton, Typography,
-    Dialog, DialogActions, DialogContentText, DialogContent, DialogTitle, Button
+    Box,
+    IconButton,
+    Popper,
+    Tooltip,
+    Popover,
+    List,
+    ListItem,
+    ListItemButton,
+    Typography,
 } from '@mui/material';
 import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import MessageRecallDialog from './MessageRecallDialog'; // Assuming you have the recall dialog as a separate component
+import MessageRecallDialog from './MessageRecallDialog';
 
 const MessageActions = ({
     item,
-    anchorEl,
-    dotAnchor,
+    popoverAnchorEl,
+    dotAnchor, // cần được đổi tên thành actionMenuAnchorEl
+    currentUser,
     handleReply,
-    handleClick,
-    currentAnchorEl,
+    handleDotAnchor, // cần được đổi tên thành handleActionMenuOpen
+    currentPopoverAnchorEl,
     handlePopoverOpen,
     handlePopoverClose,
     handleRetrieveMessages,
@@ -28,19 +36,26 @@ const MessageActions = ({
         setDialogOpen(false);
     };
 
-    const handleRecall = (recallOption) => {
-        console.log(`Message recalled with option: ${recallOption}`);
-        handleRetrieveMessages(item); // Call this or your custom logic
+    const handleRecall = () => {
+        handleRetrieveMessages(item);
+    };
+
+    const handleClick = () => {
+        if (currentUser === item.senderUserName) {
+            handleOpenDialog();
+        } else {
+            handleRetrieveMessages(item);
+        }
     };
 
     return (
         <>
             <Popper
-                open={anchorEl === item.id}
-                anchorEl={currentAnchorEl}
+                open={popoverAnchorEl === item.id}
+                anchorEl={currentPopoverAnchorEl}
                 placement="right"
                 disablePortal={true}
-                onMouseEnter={() => handlePopoverOpen(currentAnchorEl, item.id)}
+                onMouseEnter={() => handlePopoverOpen(currentPopoverAnchorEl, item.id)}
             >
                 <Box>
                     <Tooltip title="Trả lời" placement="top">
@@ -49,7 +64,7 @@ const MessageActions = ({
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Xem thêm" placement="top">
-                        <IconButton onClick={handleClick}>
+                        <IconButton onClick={handleDotAnchor}>
                             <MoreVertIcon />
                         </IconButton>
                     </Tooltip>
@@ -67,7 +82,7 @@ const MessageActions = ({
                                 </ListItemButton>
                             </ListItem>
                             <ListItem disablePadding>
-                                <ListItemButton onClick={handleOpenDialog}>
+                                <ListItemButton onClick={handleClick}>
                                     <Typography variant="body1">Thu hồi</Typography>
                                 </ListItemButton>
                             </ListItem>

@@ -12,25 +12,14 @@ const MessageItem = ({
     setUserReplied,
     setMessageReplied
 }) => {
-    const socket = useSocket()
-
-    const [dialogState, setDialogState] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
-
-    const [currentAnchorEl, setCurrentAnchorEl] = useState(null);
+    const socket = useSocket();
+    const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
+    const [currentPopoverAnchorEl, setCurrentPopoverAnchorEl] = useState(null);
     const [dotAnchor, setDotAnchor] = useState(null);
 
-    const handleOpenDialog = () => {
-        setDialogState(true);
-    };
-
-    const handleCloseDialog = () => {
-        setDialogState(false);
-    };
-
     const handlePopoverOpen = (element, index) => {
-        setAnchorEl(index);
-        setCurrentAnchorEl(element);
+        setPopoverAnchorEl(index);
+        setCurrentPopoverAnchorEl(element);
     };
 
     const handleRetrieveMessages = (data) => {
@@ -44,15 +33,14 @@ const MessageItem = ({
         setMessageReplied(replyData.message);
     };
 
-    const handleDotAnchor = (event) => {
+    const handleActionMenuOpen = (event) => {
         setDotAnchor(event.currentTarget);
     };
 
     const handlePopoverClose = () => {
-        handleCloseDialog();
-        setAnchorEl(null);
-        setDotAnchor(null)
-        setCurrentAnchorEl(null);
+        setDotAnchor(null);
+        setPopoverAnchorEl(null);
+        setCurrentPopoverAnchorEl(null);
     };
 
     const formatTime = (timestamp) => {
@@ -67,12 +55,12 @@ const MessageItem = ({
         return (
             <RevokeMessage
                 item={item}
-                anchorEl={anchorEl}
-                currentUser={currentUser}
                 formatTime={formatTime}
-                currentAnchorEl={currentAnchorEl}
+                currentUser={currentUser}
+                anchorEl={popoverAnchorEl}
                 handlePopoverOpen={handlePopoverOpen}
                 handlePopoverClose={handlePopoverClose}
+                currentAnchorEl={currentPopoverAnchorEl}
                 handleRetrieveMessages={handleRetrieveMessages}
             />
         );
@@ -89,20 +77,18 @@ const MessageItem = ({
             onMouseLeave={handlePopoverClose}
             onMouseEnter={(event) => handlePopoverOpen(event.currentTarget, item.id)}
         >
-            <MessageContent item={item} currentUser={currentUser} />
+            <MessageContent item={item} currentUser={currentUser} formatTime={formatTime} />
             <MessageActions
                 item={item}
-                anchorEl={anchorEl}
                 dotAnchor={dotAnchor}
                 handleReply={handleReply}
-                handleClick={handleDotAnchor}
-                currentAnchorEl={currentAnchorEl}
+                currentUser={currentUser}
+                popoverAnchorEl={popoverAnchorEl}
+                handleDotAnchor={handleActionMenuOpen}
                 handlePopoverOpen={handlePopoverOpen}
                 handlePopoverClose={handlePopoverClose}
+                currentPopoverAnchorEl={currentPopoverAnchorEl}
                 handleRetrieveMessages={handleRetrieveMessages}
-                handleCloseDialog={handleCloseDialog}
-                handleOpenDialog={handleOpenDialog}
-                dialogState={dialogState}
             />
         </Box>
     );

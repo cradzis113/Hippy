@@ -22,7 +22,7 @@ const MessageRecallDialog = ({ open, handleClose, handleRecall }) => {
         handleRecall(selectedValue);
         handleClose();
     };
-
+    
     return (
         <Dialog open={open} onClose={handleClose}>
             <DialogTitle>Bạn muốn thu hồi tin nhắn này ở phía ai?</DialogTitle>

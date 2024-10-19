@@ -1,7 +1,9 @@
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 import ReplyMessage from './ReplyMessage';
+import MessageTooltip from './MessageTooltip';
 
-const MessageContent = ({ item, currentUser }) => {
+const MessageContent = ({ item, currentUser, formatTime }) => {
     return (
         <Box
             sx={{
@@ -10,12 +12,16 @@ const MessageContent = ({ item, currentUser }) => {
             }}
         >
             {item.replyInfo ? (
-                <>
-                    <ReplyMessage replyInfo={item.replyInfo} />
-                    <Typography variant="body1">{item.message}</Typography>
-                </>
+                <MessageTooltip title={formatTime(item.time)}>
+                    <Box>
+                        <ReplyMessage replyInfo={item.replyInfo} />
+                        <Typography variant="body1">{item.message}</Typography>
+                    </Box>
+                </MessageTooltip>
             ) : (
-                <Typography variant="body1">{item.message}</Typography>
+                <MessageTooltip title={formatTime(item.time)}>
+                    <Typography variant="body1">{item.message}</Typography>
+                </MessageTooltip>
             )}
         </Box>
     );

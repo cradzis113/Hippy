@@ -1,18 +1,18 @@
 import { Box, Tooltip, Typography, Popper, IconButton } from '@mui/material';
 import { green } from '@mui/material/colors';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MessageTooltip from './MessageTooltip';
 
-const RevokeMessage = (
-    {
-        item,
-        anchorEl,
-        formatTime,
-        currentUser,
-        currentAnchorEl,
-        handlePopoverOpen,
-        handlePopoverClose,
-        handleRetrieveMessages
-    }) => {
+const RevokeMessage = ({
+    item,
+    anchorEl,
+    formatTime,
+    currentUser,
+    currentAnchorEl,
+    handlePopoverOpen,
+    handlePopoverClose,
+    handleRetrieveMessages
+}) => {
     return (
         <Box
             sx={{
@@ -24,17 +24,7 @@ const RevokeMessage = (
             onMouseLeave={handlePopoverClose}
             onMouseEnter={(event) => handlePopoverOpen(event.currentTarget, item.id)}
         >
-            <Tooltip
-                title={formatTime(item.time)}
-                placement="left"
-                slotProps={{
-                    popper: {
-                        modifiers: [
-                            { name: 'offset', options: { offset: [0, 5] } },
-                        ],
-                    },
-                }}
-            >
+            <MessageTooltip title={formatTime(item.time)}>
                 <Typography
                     variant="body1"
                     sx={{
@@ -46,7 +36,7 @@ const RevokeMessage = (
                         ? 'Bạn đã thu hồi một tin nhắn'
                         : `${item.revoked.revokedBoth} đã thu hồi một tin nhắn`}
                 </Typography>
-            </Tooltip>
+            </MessageTooltip>
             <Popper
                 open={anchorEl === item.id}
                 anchorEl={currentAnchorEl}
