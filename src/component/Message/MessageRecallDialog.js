@@ -41,7 +41,7 @@ const MessageRecallDialog = ({ open, handleClose, handleRecall }) => {
                         }
                     />
                     <FormControlLabel
-                        value="you"
+                        value="onlyYou"
                         control={<Radio />}
                         sx={{ mt: 2 }}
                         label={

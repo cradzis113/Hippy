@@ -108,9 +108,28 @@ const Conversation = () => {
             <List>
                 {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
                     const userMessages = chatMessageHistory[userName];
-                    const lastMessage = userMessages[userMessages.length - 1];
                     const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
+                    let lastMessage = userMessages[userMessages.length - 1];
                     let unSeenMessageCount = 0;
+
+                    const revokedMessage = userMessages.find((message) => {
+                        return message.revoked && !message.revoked.revokedBy.includes(userName);
+                    });
+                    const p = userMessages.filter(u => u.revoked && u.revoked.revokedBy.includes(currentUserName))
+                    if (revokedMessage) {
+
+                        const revokedIndex = userMessages.findIndex(message => message.id === revokedMessage.id);
+                        if (revokedIndex === userMessages.length - 1) {
+                            const previousMessage = userMessages[revokedIndex - 1];
+                            lastMessage = previousMessage;
+                        } else if (revokedIndex < userMessages.length - 1 && p.length > 1) {
+                            const previousMessage = userMessages[revokedIndex - 1];
+                            lastMessage = previousMessage;
+                        } else if (revokedIndex < userMessages.length - 1 && p.length < 1) {
+                            const previousMessage = userMessages[userMessages.length - 1];
+                            lastMessage = previousMessage;
+                        }
+                    }
 
                     if (userMessages.length === 1) {
                         unSeenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
@@ -191,7 +210,7 @@ const Conversation = () => {
                                                 whiteSpace: 'nowrap',
                                             }}
                                         >
-                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage?.message)}
+                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage.message)}
                                         </Typography>
                                         {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unSeenMessageCount} color='primary' sx={{ mr: 1 }} />}
                                     </Box>

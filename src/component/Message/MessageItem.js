@@ -22,9 +22,9 @@ const MessageItem = ({
         setCurrentPopoverAnchorEl(element);
     };
 
-    const handleRetrieveMessages = (data) => {
-        const newData = { ...data, currentUser };
-        socket.current.emit('deleteMessage', newData);
+    const handleRetrieveMessages = (messageData, visibilityOption) => {
+        const updatedData = { ...messageData, currentUser, visibilityOption };
+        socket.current.emit('deleteMessage', updatedData);
         handlePopoverClose();
     };
 

@@ -36,15 +36,15 @@ const MessageActions = ({
         setDialogOpen(false);
     };
 
-    const handleRecall = () => {
-        handleRetrieveMessages(item);
+    const handleRecall = (visibilityOption) => {
+        handleRetrieveMessages(item, visibilityOption);
     };
 
     const handleClick = () => {
         if (currentUser === item.senderUserName) {
             handleOpenDialog();
         } else {
-            handleRetrieveMessages(item);
+            handleRetrieveMessages(item, 'onlyYou');
         }
     };
 

@@ -7,7 +7,8 @@ import useSendMessage from '../../hook/UseSendMessage';
 import { useSocket } from '../../context/SocketContext';
 
 import moment from 'moment';
-import { Box, Chip, ListItem, ListItemText, List } from '@mui/material';
+import { Box, Chip, ListItem, ListItemText, List, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();

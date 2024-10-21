@@ -1,4 +1,4 @@
-import { Box, Tooltip, Typography, Popper, IconButton } from '@mui/material';
+import { Box, Typography, Popper, IconButton } from '@mui/material';
 import { green } from '@mui/material/colors';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MessageTooltip from './MessageTooltip';
@@ -66,7 +66,7 @@ const RevokeMessage = ({
                     },
                 ]}
             >
-                <IconButton onClick={() => handleRetrieveMessages(item)}>
+                <IconButton onClick={() => handleRetrieveMessages(item, 'onlyYou')}>
                     <DeleteIcon />
                 </IconButton>
             </Popper>
