@@ -8,8 +8,8 @@ import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 
 const Conversation = () => {
-    const socket = useSocket()
-    const { userData } = useAuth()
+    const socket = useSocket();
+    const { userData } = useAuth();
     const { setCurrentChatUser, messageBackState } = useData();
 
     const initialMessageHistory = userData?.data?.user?.messageHistory || {};
@@ -40,32 +40,108 @@ const Conversation = () => {
                     console.error('Search error:', error);
                 } else {
                     setCurrentChatUser(results[0]);
-                    socket.current.emit('chatEvent',
-                        { recipientUserName: results[0].userName, recipientSocketId: results[0].socketId, userName: currentUserName, socketId: socket.current.id, type: 'chatRequest' }
-                    );
+                    socket.current.emit('chatEvent', {
+                        recipientUserName: results[0].userName,
+                        recipientSocketId: results[0].socketId,
+                        userName: currentUserName,
+                        socketId: socket.current.id,
+                        type: 'chatRequest'
+                    });
                 }
-            })
+            });
         }
-    }
+    };
+
+    const processUserMessages = (chatMessageHistory, userName, currentUserName) => {
+        const userMessages = chatMessageHistory[userName];
+        const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
+        let lastMessage = userMessages[userMessages.length - 1];
+        let unseenMessageCount = 0;
+
+        const firstRevokedMessageByOtherUser = userMessages.find(message =>
+            !message?.revoked?.revokedBoth && !message.revoked?.revokedBy?.includes(userName)
+        );
+
+        const firstNonRevokedMessageIndex = userMessages.findIndex(message => !message.revoked);
+
+        const revokedMessagesByCurrentUser = userMessages.filter(message =>
+            message.revoked && message?.revoked?.revokedBy?.includes(currentUserName)
+        );
+
+        const revokedMessages = userMessages.filter(i =>
+            !i?.revoked?.revokedBoth && !i?.revoked?.revokedBy?.includes(currentUserName)
+        ).reverse();
+
+        const resetIndex = userMessages.length - userMessages.length;
+        const latestRevokedMessage = revokedMessages.reverse().find(iw => iw.revoked);
+        const firstRevokedMessageIndex = userMessages.findIndex(message =>
+            message.id === firstRevokedMessageByOtherUser?.id
+        );
+
+        const iz = userMessages.filter(h => h?.revoked?.revokedBoth === currentUserName && !h?.revoked?.revokedBy).reverse()
+        const gh = iz.find(p => p?.revoked?.revokedBoth === currentUserName)
+
+        if (firstRevokedMessageByOtherUser) {
+            if (revokedMessagesByCurrentUser.length === userMessages.length) {
+                lastMessage = { message: 'history was cleared' };
+            } else if (userMessages[0].revoked && lastMessage.revoked && !lastMessage.revoked.revokedBoth && !userMessages[0].revoked.revokedBoth) {
+                lastMessage = latestRevokedMessage;
+            } else if (revokedMessagesByCurrentUser.length + 1 === userMessages.length && firstNonRevokedMessageIndex !== -1) {
+                lastMessage = userMessages[firstNonRevokedMessageIndex];
+            } else if (lastMessage.revoked && userMessages.length > 2) {
+                lastMessage = userMessages[userMessages.length - 2];
+            } else if (userMessages.length < 3 && (lastMessage?.revoked?.revokedBoth || lastMessage?.revoked?.revokedBy.includes(currentUserName) && (userMessages[0]?.revoked?.revokedBoth || userMessages[0]?.revoked?.revokedBy.includes(currentUserName)))) {
+                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+            }
+        } else {
+            if (revokedMessages.length > 1) {
+                lastMessage = revokedMessages[revokedMessages.length - 1];
+            } else if (!lastMessage.revoked) {
+                lastMessage = userMessages[userMessages.length - 1];
+            } else if (userMessages[0]?.revoked?.revokedBy?.includes(currentUserName) && lastMessage?.revoked?.revokedBy?.includes(currentUserName) && userMessages.length === 2) {
+                lastMessage = { message: 'history was cleared' };
+            } else if (userMessages.length < 3 && userMessages[0].revoked.revokedBy.includes(currentUserName) && lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
+                lastMessage = { message: 'history was cleared' };
+            } else if (lastMessage?.revoked?.revokedBoth && !lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
+                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+            } else if (revokedMessagesByCurrentUser.length === userMessages.length) {
+                lastMessage = { message: 'history was cleared' };
+            } else if (userMessages.length < 3 && (lastMessage?.revoked?.revokedBoth || lastMessage?.revoked?.revokedBy.includes(currentUserName) && (userMessages[0]?.revoked?.revokedBoth || userMessages[0]?.revoked?.revokedBy.includes(currentUserName)))) {
+                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+            } else if (lastMessage.revoked) {
+                lastMessage = { message: `${(gh?.senderUserName === currentUserName) ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+            }
+        }
+
+        if (firstSeenMessageIndex !== -1 && resetIndex !== firstRevokedMessageIndex) {
+            unseenMessageCount = userMessages.slice(firstSeenMessageIndex + 1).length;
+        } else if (firstSeenMessageIndex === -1 && resetIndex !== firstRevokedMessageIndex) {
+            unseenMessageCount = userMessages.length;
+        } else if (userMessages.length === 1 && resetIndex !== firstRevokedMessageIndex) {
+            unseenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
+        }
+
+        return { lastMessage, unseenMessageCount };
+    };
 
     useEffect(() => {
         if (!socket.current || !userData?.data?.user) return;
 
         const notificationData = (data) => {
-            setNewMessage(data)
-        }
+            setNewMessage(data);
+        };
 
         const messageHistory = (data) => {
-            setChatMessageHistory(data)
-        }
+            setChatMessageHistory(data);
+        };
 
         const readMessages = (data) => {
-            setChatMessageHistory(data.messageHistory)
-        }
+            setChatMessageHistory(data.messageHistory);
+        };
 
         socket.current.on('connect', () => {
-            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' })
-        })
+            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' });
+        });
 
         socket.current.on('notification', notificationData);
         socket.current.on('messageHistoryUpdate', messageHistory);
@@ -76,13 +152,13 @@ const Conversation = () => {
             socket.current.off('messageHistoryUpdate', messageHistory);
             socket.current.off('readMessages', readMessages);
         };
-    }, [socket.current])
+    }, [socket.current]);
 
     useEffect(() => {
         if (Object.keys(messageBackState).length > 0) {
-            setChatMessageHistory(messageBackState)
+            setChatMessageHistory(messageBackState);
         }
-    }, [messageBackState])
+    }, [messageBackState]);
 
     return (
         <Box
@@ -107,41 +183,7 @@ const Conversation = () => {
         >
             <List>
                 {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
-                    const userMessages = chatMessageHistory[userName];
-                    const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
-                    let lastMessage = userMessages[userMessages.length - 1];
-                    let unSeenMessageCount = 0;
-
-                    const revokedMessage = userMessages.find((message) => {
-                        return message.revoked && !message.revoked.revokedBy.includes(userName);
-                    });
-                    const p = userMessages.filter(u => u.revoked && u.revoked.revokedBy.includes(currentUserName))
-                    if (revokedMessage) {
-
-                        const revokedIndex = userMessages.findIndex(message => message.id === revokedMessage.id);
-                        if (revokedIndex === userMessages.length - 1) {
-                            const previousMessage = userMessages[revokedIndex - 1];
-                            lastMessage = previousMessage;
-                        } else if (revokedIndex < userMessages.length - 1 && p.length > 1) {
-                            const previousMessage = userMessages[revokedIndex - 1];
-                            lastMessage = previousMessage;
-                        } else if (revokedIndex < userMessages.length - 1 && p.length < 1) {
-                            const previousMessage = userMessages[userMessages.length - 1];
-                            lastMessage = previousMessage;
-                        }
-                    }
-
-                    if (userMessages.length === 1) {
-                        unSeenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
-                    }
-
-                    if (firstSeenMessageIndex !== -1) {
-                        unSeenMessageCount = userMessages.slice(firstSeenMessageIndex + 1).length;
-                    }
-
-                    if (firstSeenMessageIndex === -1) {
-                        unSeenMessageCount = userMessages.length
-                    }
+                    const { lastMessage, unseenMessageCount } = processUserMessages(chatMessageHistory, userName, currentUserName);
 
                     return (
                         <ListItem
@@ -212,7 +254,7 @@ const Conversation = () => {
                                         >
                                             {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage.message)}
                                         </Typography>
-                                        {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unSeenMessageCount} color='primary' sx={{ mr: 1 }} />}
+                                        {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unseenMessageCount} color='primary' sx={{ mr: 1 }} />}
                                     </Box>
                                 }
                             />
