@@ -54,73 +54,91 @@ const Conversation = () => {
 
     const processUserMessages = (chatMessageHistory, userName, currentUserName) => {
         const userMessages = chatMessageHistory[userName];
-        const firstSeenMessageIndex = userMessages.findIndex(msg => msg.seen === true);
         let lastMessage = userMessages[userMessages.length - 1];
         let unseenMessageCount = 0;
-
-        const firstRevokedMessageByOtherUser = userMessages.find(message =>
-            !message?.revoked?.revokedBoth && !message.revoked?.revokedBy?.includes(userName)
+    
+        const firstNonRevokedByOtherUser = userMessages.find(
+            message => !message?.revoked?.revokedBoth && !message.revoked?.revokedBy?.includes(userName)
         );
-
+    
         const firstNonRevokedMessageIndex = userMessages.findIndex(message => !message.revoked);
-
-        const revokedMessagesByCurrentUser = userMessages.filter(message =>
-            message.revoked && message?.revoked?.revokedBy?.includes(currentUserName)
+        const messagesRevokedByCurrentUser = userMessages.filter(
+            message => message?.revoked?.revokedBy?.includes(currentUserName)
         );
-
-        const revokedMessages = userMessages.filter(i =>
-            !i?.revoked?.revokedBoth && !i?.revoked?.revokedBy?.includes(currentUserName)
-        ).reverse();
-
-        const resetIndex = userMessages.length - userMessages.length;
-        const latestRevokedMessage = revokedMessages.reverse().find(iw => iw.revoked);
-        const firstRevokedMessageIndex = userMessages.findIndex(message =>
-            message.id === firstRevokedMessageByOtherUser?.id
+    
+        const nonRevokedMessages = userMessages
+            .filter(msg => !msg?.revoked?.revokedBoth && !msg?.revoked?.revokedBy?.includes(currentUserName))
+            .reverse();
+    
+        const latestRevokedMessage = nonRevokedMessages.reverse().find(message => message.revoked);
+        const messagesRevokedByBoth = userMessages
+            .filter(message => message?.revoked?.revokedBoth && !message?.revoked?.revokedBy?.includes(currentUserName))
+            .reverse();
+    
+        const revokedMessagesByBoth = userMessages.filter(
+            msg => msg?.revoked?.revokedBoth && !msg?.revoked?.revokedBy?.includes(currentUserName)
         );
-
-        const iz = userMessages.filter(h => h?.revoked?.revokedBoth === currentUserName && !h?.revoked?.revokedBy).reverse()
-        const gh = iz.find(p => p?.revoked?.revokedBoth === currentUserName)
-
-        if (firstRevokedMessageByOtherUser) {
-            if (revokedMessagesByCurrentUser.length === userMessages.length) {
-                lastMessage = { message: 'history was cleared' };
-            } else if (userMessages[0].revoked && lastMessage.revoked && !lastMessage.revoked.revokedBoth && !userMessages[0].revoked.revokedBoth) {
-                lastMessage = latestRevokedMessage;
-            } else if (revokedMessagesByCurrentUser.length + 1 === userMessages.length && firstNonRevokedMessageIndex !== -1) {
+        const firstMessageRevokedByBoth = revokedMessagesByBoth.find(msg => msg?.revoked?.revokedBoth);
+        const latestMessageRevokedByBoth = revokedMessagesByBoth.reverse().find(msg => msg?.revoked?.revokedBoth);
+        const latestRevokedIndex = userMessages.findIndex(msg => msg?.id === latestMessageRevokedByBoth?.id);
+        const latestNonRevokedIndex = userMessages.findIndex(
+            msg => msg?.id === nonRevokedMessages[nonRevokedMessages.length - 1]?.id
+        );
+    
+        if (firstNonRevokedByOtherUser) {
+            if (latestNonRevokedIndex > latestRevokedIndex) {
+                lastMessage = userMessages[latestNonRevokedIndex];
+            } else if (latestRevokedIndex !== -1 && !userMessages[latestRevokedIndex]?.revoked?.revokedBy?.includes(currentUserName)) {
+                lastMessage = {
+                    message: `${userMessages[latestRevokedIndex].senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                };
+            } else if (messagesRevokedByCurrentUser.length === userMessages.length) {
+                lastMessage = { message: 'History was cleared' };
+            } else if (messagesRevokedByCurrentUser.length + 1 === userMessages.length && firstNonRevokedMessageIndex !== -1) {
                 lastMessage = userMessages[firstNonRevokedMessageIndex];
-            } else if (lastMessage.revoked && userMessages.length > 2) {
-                lastMessage = userMessages[userMessages.length - 2];
-            } else if (userMessages.length < 3 && (lastMessage?.revoked?.revokedBoth || lastMessage?.revoked?.revokedBy.includes(currentUserName) && (userMessages[0]?.revoked?.revokedBoth || userMessages[0]?.revoked?.revokedBy.includes(currentUserName)))) {
-                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+            } else if (
+                userMessages[0].revoked &&
+                lastMessage.revoked &&
+                !lastMessage.revoked.revokedBoth &&
+                !userMessages[0].revoked.revokedBoth &&
+                latestRevokedMessage
+            ) {
+                lastMessage = latestRevokedMessage;
+            } else if (nonRevokedMessages.length > 1) {
+                lastMessage = nonRevokedMessages[nonRevokedMessages.length - 1];
+            } else if (messagesRevokedByBoth.length > 0 && nonRevokedMessages.length === 0) {
+                lastMessage = {
+                    message: `${messagesRevokedByBoth[0].senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                };
             }
         } else {
-            if (revokedMessages.length > 1) {
-                lastMessage = revokedMessages[revokedMessages.length - 1];
-            } else if (!lastMessage.revoked) {
-                lastMessage = userMessages[userMessages.length - 1];
-            } else if (userMessages[0]?.revoked?.revokedBy?.includes(currentUserName) && lastMessage?.revoked?.revokedBy?.includes(currentUserName) && userMessages.length === 2) {
-                lastMessage = { message: 'history was cleared' };
-            } else if (userMessages.length < 3 && userMessages[0].revoked.revokedBy.includes(currentUserName) && lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
-                lastMessage = { message: 'history was cleared' };
+            if (
+                userMessages[0]?.revoked?.revokedBy?.includes(currentUserName) &&
+                lastMessage?.revoked?.revokedBy?.includes(currentUserName) &&
+                userMessages.length === 2
+            ) {
+                lastMessage = { message: 'History was cleared' };
             } else if (lastMessage?.revoked?.revokedBoth && !lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
-                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
-            } else if (revokedMessagesByCurrentUser.length === userMessages.length) {
-                lastMessage = { message: 'history was cleared' };
-            } else if (userMessages.length < 3 && (lastMessage?.revoked?.revokedBoth || lastMessage?.revoked?.revokedBy.includes(currentUserName) && (userMessages[0]?.revoked?.revokedBoth || userMessages[0]?.revoked?.revokedBy.includes(currentUserName)))) {
-                lastMessage = { message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
-            } else if (lastMessage.revoked) {
-                lastMessage = { message: `${(gh?.senderUserName === currentUserName) ? 'Bạn' : userName} đã thu hồi một tin nhắn` };
+                lastMessage = {
+                    message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                };
+            } else if (messagesRevokedByCurrentUser.length === userMessages.length) {
+                lastMessage = { message: 'History was cleared' };
+            } else if (firstMessageRevokedByBoth && lastMessage.revoked.revokedBoth) {
+                lastMessage = {
+                    message: `${firstMessageRevokedByBoth.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                };
+            } else if (nonRevokedMessages.length === 1 && !firstMessageRevokedByBoth) {
+                lastMessage = nonRevokedMessages[0];
+            } else if (nonRevokedMessages.length > 1) {
+                lastMessage = nonRevokedMessages[nonRevokedMessages.length - 1];
+            } else if (firstMessageRevokedByBoth && nonRevokedMessages.length === 0) {
+                lastMessage = {
+                    message: `${firstMessageRevokedByBoth.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                };
             }
         }
-
-        if (firstSeenMessageIndex !== -1 && resetIndex !== firstRevokedMessageIndex) {
-            unseenMessageCount = userMessages.slice(firstSeenMessageIndex + 1).length;
-        } else if (firstSeenMessageIndex === -1 && resetIndex !== firstRevokedMessageIndex) {
-            unseenMessageCount = userMessages.length;
-        } else if (userMessages.length === 1 && resetIndex !== firstRevokedMessageIndex) {
-            unseenMessageCount = userMessages.slice(firstSeenMessageIndex).length;
-        }
-
+    
         return { lastMessage, unseenMessageCount };
     };
 
