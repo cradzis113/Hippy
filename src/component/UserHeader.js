@@ -41,7 +41,6 @@ const UserHeader = ({ user }) => {
                         alt="User avatar"
                         sx={{ width: 40, height: 40, mr: 2 }}
                     >
-
                     </Avatar>
                     <Box>
                         <Typography variant="h6" fontWeight="bold" color='black' lineHeight={1.2}>

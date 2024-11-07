@@ -56,35 +56,33 @@ const Conversation = () => {
         const userMessages = chatMessageHistory[userName];
         let lastMessage = userMessages[userMessages.length - 1];
         let unseenMessageCount = 0;
-    
+
         const firstNonRevokedByOtherUser = userMessages.find(
             message => !message?.revoked?.revokedBoth && !message.revoked?.revokedBy?.includes(userName)
         );
-    
+
         const firstNonRevokedMessageIndex = userMessages.findIndex(message => !message.revoked);
         const messagesRevokedByCurrentUser = userMessages.filter(
             message => message?.revoked?.revokedBy?.includes(currentUserName)
         );
-    
+
         const nonRevokedMessages = userMessages
             .filter(msg => !msg?.revoked?.revokedBoth && !msg?.revoked?.revokedBy?.includes(currentUserName))
             .reverse();
-    
+
         const latestRevokedMessage = nonRevokedMessages.reverse().find(message => message.revoked);
-        const messagesRevokedByBoth = userMessages
-            .filter(message => message?.revoked?.revokedBoth && !message?.revoked?.revokedBy?.includes(currentUserName))
-            .reverse();
-    
         const revokedMessagesByBoth = userMessages.filter(
             msg => msg?.revoked?.revokedBoth && !msg?.revoked?.revokedBy?.includes(currentUserName)
         );
+
         const firstMessageRevokedByBoth = revokedMessagesByBoth.find(msg => msg?.revoked?.revokedBoth);
         const latestMessageRevokedByBoth = revokedMessagesByBoth.reverse().find(msg => msg?.revoked?.revokedBoth);
         const latestRevokedIndex = userMessages.findIndex(msg => msg?.id === latestMessageRevokedByBoth?.id);
         const latestNonRevokedIndex = userMessages.findIndex(
             msg => msg?.id === nonRevokedMessages[nonRevokedMessages.length - 1]?.id
         );
-    
+        const n = userMessages.findIndex(i => i.seen)
+
         if (firstNonRevokedByOtherUser) {
             if (latestNonRevokedIndex > latestRevokedIndex) {
                 lastMessage = userMessages[latestNonRevokedIndex];
@@ -106,9 +104,9 @@ const Conversation = () => {
                 lastMessage = latestRevokedMessage;
             } else if (nonRevokedMessages.length > 1) {
                 lastMessage = nonRevokedMessages[nonRevokedMessages.length - 1];
-            } else if (messagesRevokedByBoth.length > 0 && nonRevokedMessages.length === 0) {
+            } else if (revokedMessagesByBoth.length > 0 && nonRevokedMessages.length === 0) {
                 lastMessage = {
-                    message: `${messagesRevokedByBoth[0].senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
+                    message: `${revokedMessagesByBoth.reverse()[0].senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
                 };
             }
         } else {
@@ -138,7 +136,15 @@ const Conversation = () => {
                 };
             }
         }
-    
+
+        if (n !== -1) {
+            unseenMessageCount = userMessages.slice(n + 1).length;
+        } else if (n === 1) {
+            unseenMessageCount = userMessages.slice(n).length;
+        } else if(n === -1) {
+            
+        }
+
         return { lastMessage, unseenMessageCount };
     };
 
