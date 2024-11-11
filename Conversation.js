@@ -84,34 +84,61 @@ const Conversation = () => {
         if (firstNonRevokedByOtherUser) {
             if (latestNonRevokedIndex > latestRevokedIndex) {
                 lastMessage = userMessages[latestNonRevokedIndex];
+                console.log(1)
             } else if (latestRevokedIndex !== -1 && !userMessages[latestRevokedIndex]?.revoked?.revokedBy?.includes(currentUserName)) {
                 lastMessage = {
                     message: `${userMessages[latestRevokedIndex].senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
                 };
+                console.log(2)
             } else if (messagesRevokedByCurrentUser.length === userMessages.length) {
                 lastMessage = { message: 'History was cleared' };
+                console.log(3)
             }
+            console.log(userMessages.length )
         } else {
-            if (lastMessage?.revoked?.revokedBoth && !lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
+            
+            if (
+                userMessages[0]?.revoked?.revokedBy?.includes(currentUserName) &&
+                lastMessage?.revoked?.revokedBy?.includes(currentUserName) &&
+                userMessages.length === 2
+            ) {
+                lastMessage = { message: 'History was cleared' };
+                console.log(4)
+
+            } else if (lastMessage?.revoked?.revokedBoth && !lastMessage?.revoked?.revokedBy?.includes(currentUserName)) {
                 lastMessage = {
                     message: `${lastMessage.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
                 };
+                console.log(5)
+
             } else if (messagesRevokedByCurrentUser.length === userMessages.length) {
                 lastMessage = { message: 'History was cleared' };
+                console.log(6)
+
             } else if (nonRevokedMessages.length === 1 && !firstMessageRevokedByBoth) {
                 lastMessage = nonRevokedMessages[0];
+                console.log(7)
+
             } else if (nonRevokedMessages.length > 1 && !latestMessageRevokedByBoth) {
                 lastMessage = nonRevokedMessages[nonRevokedMessages.length - 1];
+                console.log(8)
+
             } else if (firstMessageRevokedByBoth && nonRevokedMessages.length === 0) {
                 lastMessage = {
                     message: `${firstMessageRevokedByBoth.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
                 };
+                console.log(9)
+
             } else if (latestNonRevokedIndex > latestRevokedIndex) {
                 lastMessage = userMessages[latestNonRevokedIndex];
+                console.log(10)
+
             } else if (latestNonRevokedIndex < latestRevokedIndex) {
                 lastMessage = {
                     message: `${firstMessageRevokedByBoth.senderUserName === currentUserName ? 'Bạn' : userName} đã thu hồi một tin nhắn`
                 };
+                console.log(11)
+
             }
         }
 
@@ -148,6 +175,7 @@ const Conversation = () => {
         };
 
         socket.current.emit('getUserData', currentUserName);
+
         socket.current.on('connect', () => {
             socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' });
         });
@@ -263,7 +291,7 @@ const Conversation = () => {
                                                 whiteSpace: 'nowrap',
                                             }}
                                         >
-                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? newMessage.message : lastMessage.message}
+                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? String(newMessage.message) : String(lastMessage.message)}
                                         </Typography>
                                         {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unseenMessageCount} color='primary' sx={{ mr: 1 }} />}
                                     </Box>

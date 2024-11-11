@@ -12,7 +12,7 @@ const UseAuth = () => {
 
   const sendVerificationCode = async () => {
     try {
-      const response = await fetchAPI('http://localhost:3000/api/getcode', 'POST', { email });
+      const response = await fetchAPI('http://localhost:3001/api/getcode', 'POST', { email });
       setResponseStatus(response.status);
       setResponseMessage(response.data.message);
     } catch (error) {
@@ -45,7 +45,7 @@ const UseAuth = () => {
 
   const handleCodeSubmission = async (code, email) => {
     try {
-      const response = await fetchAPI('http://localhost:3000/api/auth', 'POST', { code, email }, null, true);
+      const response = await fetchAPI('http://localhost:3001/api/auth', 'POST', { code, email }, null, true);
       if (response.status === 201) {
         login()
       }

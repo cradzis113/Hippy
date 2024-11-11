@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await fetchAPI('http://localhost:3000/api/clear-cookie', 'POST', null, null, true);
+      const response = await fetchAPI('http://localhost:3001/api/clear-cookie', 'POST', null, null, true);
       if (response.status === 200) {
         setIsAuthenticated(false);
       }
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetchAPI('http://localhost:3000/api/getuserdata', 'GET', null, null, true);
+        const response = await fetchAPI('http://localhost:3001/api/getuserdata', 'GET', null, null, true);
 
         if (response.status === 200) {
           setUserData(response);
@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }) => {
     } else {
       fetchData()
     }
-
   }, []);
 
   return (

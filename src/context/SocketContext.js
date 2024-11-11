@@ -14,7 +14,7 @@ export const SocketProvider = ({ children }) => {
     const [hasFocus, setHasFocus] = useState(false);
 
     useEffect(() => {
-        const socketInstance = io('http://localhost:3000');
+        const socketInstance = io('http://localhost:3001');
         socket.current = (socketInstance);
 
         socketInstance.on('connect', () => {
