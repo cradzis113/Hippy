@@ -7,8 +7,10 @@ import useSendMessage from '../../hook/UseSendMessage';
 import { useSocket } from '../../context/SocketContext';
 
 import moment from 'moment';
-import { Box, Chip, ListItem, ListItemText, List, IconButton } from '@mui/material';
+import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import HistoryClearedMessage from '../HistoryClearedMessage';
+import ReplyIcon from '@mui/icons-material/Reply';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();
@@ -113,35 +115,46 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {messages.map((dayGroup, index) => (
-                    <React.Fragment key={index}>
-                        <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
-                            <Chip label={moment(dayGroup.time).format('MMMM D')} />
-                        </Box>
-                        {dayGroup.messages.map((item, msgIndex) => (
-                            <React.Fragment key={msgIndex}>
-                                {!item?.revoked?.revokedBy?.includes(currentUser) && (
-                                    <Box
-                                        sx={{
-                                            width: 650,
-                                            padding: 1,
-                                            display: 'flex',
-                                            margin: '0 auto',
-                                            flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
-                                        }}
-                                    >
-                                        <MessageItem
-                                            item={item}
-                                            currentUser={currentUser}
-                                            setUserReplied={setUserReplied}
-                                            setMessageReplied={setMessageReplied}
-                                        />
-                                    </Box>
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </React.Fragment>
-                ))}
+                {messages.map((dayGroup, index) => {
+                    const hasNonRevokedMessage = dayGroup.messages.some(i => !i?.revoked?.revokedBy?.includes(currentUser));
+
+                    return (
+                        <React.Fragment key={index}>
+
+                            {hasNonRevokedMessage ? (
+                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                                    <Chip label={moment(dayGroup.time).format('MMMM D')} />
+                                </Box>
+                            ) : (
+                                <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
+                                    <HistoryClearedMessage />
+                                </Box>
+                            )}
+                            {dayGroup.messages.map((item, msgIndex) => (
+                                <React.Fragment key={msgIndex}>
+                                    {!item?.revoked?.revokedBy?.includes(currentUser) && (
+                                        <Box
+                                            sx={{
+                                                width: 650,
+                                                padding: 1,
+                                                display: 'flex',
+                                                margin: '0 auto',
+                                                flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
+                                            }}
+                                        >
+                                            <MessageItem
+                                                item={item}
+                                                currentUser={currentUser}
+                                                setUserReplied={setUserReplied}
+                                                setMessageReplied={setMessageReplied}
+                                            />
+                                        </Box>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </React.Fragment>
+                    )
+                })}
             </Box>
             <Box
                 sx={{
@@ -151,25 +164,47 @@ const MessageList = ({ user }) => {
                 }}
             >
                 {(messageReplied && userReplied) && (
-                    <List sx={{ pb: 0 }}>
+                    <List sx={{ py: '5px', bgcolor: 'white', borderRadius: '8px', }}>
                         <ListItem
                             disablePadding
-                            sx={{
-                                backgroundColor: 'lightgray',
-                                borderRadius: '8px',
-                                border: '1px solid #ddd',
-                                padding: '0 8px',
-                            }}
                             secondaryAction={
-                                <IconButton aria-label="comment" onClick={handleCloseReliedMessage}>
+                                <IconButton aria-label="close" onClick={handleCloseReliedMessage}>
                                     <CloseIcon />
                                 </IconButton>
                             }
                         >
-                            <ListItemText
-                                primary={`${userReplied} replied:`}
-                                secondary={messageReplied}
-                            />
+                            <ListItemIcon sx={{ minWidth: '40px', pl: 1 }}>
+                                <ReplyIcon />
+                            </ListItemIcon>
+                            <Box
+                                sx={{
+                                    bgcolor: '#f3e5f5',
+                                    borderRadius: 1.5,
+                                    width: 'calc(100% - 100px)',
+                                    position: 'relative',
+                                    pl: 2,
+                                    overflow: 'hidden',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: 0,
+                                        height: '100%',
+                                        borderLeft: '4px solid #e040fb',
+                                    },
+                                }}
+                            >
+                                <ListItemText
+                                    primary={
+                                        <Typography variant='body2' color='#e040fb' fontWeight={'bold'}>{userReplied}</Typography>
+                                    }
+                                    secondary={
+                                        <Typography variant='body2' color='black'>{messageReplied}</Typography>
+                                    }
+                                />
+                            </Box>
+
                         </ListItem>
                     </List>
                 )}
@@ -181,7 +216,7 @@ const MessageList = ({ user }) => {
                     setShowEmojiPicker={setShowEmojiPicker}
                 />
             </Box>
-        </Box>
+        </Box >
     );
 };
 

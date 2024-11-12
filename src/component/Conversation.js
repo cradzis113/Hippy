@@ -171,6 +171,20 @@ const Conversation = () => {
         }
     }, [messageBackState]);
 
+    const shouldDisplayMessage = (lastMessage, unreadMessageCount) => {
+        if (Object.keys(lastMessage).length > 1) {
+            if (lastMessage.message.includes(`${lastMessage.senderUserName} đã thu hồi một tin nhắn`)) {
+                return false;
+            }
+        } else {
+            if (!lastMessage.message.includes(`Bạn đã thu hồi một tin nhắn`) && unreadMessageCount > 0) {
+                return false;
+            }
+
+            return true;
+        }
+    };
+
     return (
         <Box
             sx={{
@@ -234,7 +248,6 @@ const Conversation = () => {
                                             ) : (
                                                 <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
                                             ))}
-
                                             <Typography
                                                 variant="caption"
                                                 component="span"
@@ -261,6 +274,7 @@ const Conversation = () => {
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 whiteSpace: 'nowrap',
+                                                maxWidth: shouldDisplayMessage((newMessage || lastMessage), unseenMessageCount) ? '100%' : '85%'
                                             }}
                                         >
                                             {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? newMessage.message : lastMessage.message}

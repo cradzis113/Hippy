@@ -13,10 +13,10 @@ const MessageContent = ({ item, currentUser, formatTime }) => {
         >
             {item.replyInfo ? (
                 <MessageTooltip title={formatTime(item.time)}>
-                    <Box>
+                    <>
                         <ReplyMessage replyInfo={item.replyInfo} />
                         <Typography variant="body1">{item.message}</Typography>
-                    </Box>
+                    </>
                 </MessageTooltip>
             ) : (
                 <MessageTooltip title={formatTime(item.time)}>
