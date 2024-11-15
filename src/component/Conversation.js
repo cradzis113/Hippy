@@ -6,6 +6,7 @@ import { useData } from '../context/DataContext';
 import { useSocket } from '../context/SocketContext';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import BadgeAvatars from './BadgeAvatars';
 
 const Conversation = () => {
     const socket = useSocket();
@@ -209,7 +210,7 @@ const Conversation = () => {
             <List>
                 {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
                     const { lastMessage, unseenMessageCount } = processUserMessages(chatMessageHistory, userName, currentUserName);
-
+                                                                                                                                                                     
                     return (
                         <ListItem
                             key={index}
@@ -225,7 +226,7 @@ const Conversation = () => {
                             onClick={() => handleClick(userName)}
                         >
                             <ListItemAvatar>
-                                <Avatar alt={userName} src={lastMessage?.url} sx={{ width: 54, height: 54, mr: 2 }} />
+                               <BadgeAvatars />
                             </ListItemAvatar>
                             <ListItemText
                                 primary={
@@ -279,7 +280,12 @@ const Conversation = () => {
                                         >
                                             {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? newMessage.message : lastMessage.message}
                                         </Typography>
-                                        {lastMessage?.senderUserName !== currentUserName && <Badge badgeContent={unseenMessageCount} color='primary' sx={{ mr: 1 }} />}
+                                        {lastMessage?.senderUserName !== currentUserName &&
+                                            <Badge
+                                                badgeContent={unseenMessageCount}
+                                                color='primary' sx={{ mr: 1 }}
+                                            />
+                                        }
                                     </Box>
                                 }
                             />

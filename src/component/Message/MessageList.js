@@ -101,6 +101,14 @@ const MessageList = ({ user }) => {
         setUserReplied(null);
     };
 
+    const hasVisibleMessageInFirstGroup = messages[0]?.messages?.some(
+        message => message?.revoked?.revokedBy?.includes(currentUser)
+    );
+
+    const latestVisibleMessage = messages[messages.length - 1]?.messages?.find(
+        i => !i?.revoked?.revokedBy?.includes(currentUser)
+    );
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -115,19 +123,22 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {messages.map((dayGroup, index) => {
-                    const hasNonRevokedMessage = dayGroup.messages.some(i => !i?.revoked?.revokedBy?.includes(currentUser));
+                {hasVisibleMessageInFirstGroup && !latestVisibleMessage && (
+                    <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
+                        <HistoryClearedMessage />
+                    </Box>
+                )}
+
+                {(!hasVisibleMessageInFirstGroup || latestVisibleMessage) && messages.map((dayGroup, index) => {
+                    const hasVisibleMessageInDayGroup = dayGroup.messages.some(
+                        message => !message?.revoked?.revokedBy?.includes(currentUser)
+                    );
 
                     return (
                         <React.Fragment key={index}>
-
-                            {hasNonRevokedMessage ? (
+                            {hasVisibleMessageInDayGroup && (
                                 <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
                                     <Chip label={moment(dayGroup.time).format('MMMM D')} />
-                                </Box>
-                            ) : (
-                                <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
-                                    <HistoryClearedMessage />
                                 </Box>
                             )}
                             {dayGroup.messages.map((item, msgIndex) => (
@@ -153,9 +164,10 @@ const MessageList = ({ user }) => {
                                 </React.Fragment>
                             ))}
                         </React.Fragment>
-                    )
+                    );
                 })}
             </Box>
+
             <Box
                 sx={{
                     width: 650,
@@ -164,7 +176,7 @@ const MessageList = ({ user }) => {
                 }}
             >
                 {(messageReplied && userReplied) && (
-                    <List sx={{ py: '5px', bgcolor: 'white', borderRadius: '8px', }}>
+                    <List sx={{ py: '5px', bgcolor: 'white', borderRadius: '8px' }}>
                         <ListItem
                             disablePadding
                             secondaryAction={
@@ -204,7 +216,6 @@ const MessageList = ({ user }) => {
                                     }
                                 />
                             </Box>
-
                         </ListItem>
                     </List>
                 )}
@@ -216,7 +227,7 @@ const MessageList = ({ user }) => {
                     setShowEmojiPicker={setShowEmojiPicker}
                 />
             </Box>
-        </Box >
+        </Box>
     );
 };
 
