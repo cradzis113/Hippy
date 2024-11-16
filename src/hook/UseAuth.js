@@ -8,7 +8,7 @@ const UseAuth = () => {
   const [responseStatus, setResponseStatus] = useState(null);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [invalidMessage, setInvalidMessage] = useState('')
-  const { login } = useAuth()
+  const { login, setUserData } = useAuth()
 
   const sendVerificationCode = async () => {
     try {
@@ -47,7 +47,9 @@ const UseAuth = () => {
     try {
       const response = await fetchAPI('http://localhost:3001/api/auth', 'POST', { code, email }, null, true);
       if (response.status === 201) {
-        login()
+        login();
+        window.location.reload();
+        // setUserData(response);
       }
     } catch (error) {
       console.error('Error submitting code:', error.message);

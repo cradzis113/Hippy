@@ -39,7 +39,6 @@ const UserHeader = ({ user }) => {
     useEffect(() => {
         if (user) {
             setUserStatus(user);
-            console.log(user)
         }
 
         const handleUserStatusUpdate = (data) => {

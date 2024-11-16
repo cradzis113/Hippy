@@ -105,10 +105,9 @@ const MessageList = ({ user }) => {
         message => message?.revoked?.revokedBy?.includes(currentUser)
     );
 
-    const latestVisibleMessage = messages[messages.length - 1]?.messages?.find(
-        i => !i?.revoked?.revokedBy?.includes(currentUser)
-    );
-
+    const allMessages = messages.flatMap(item => item.messages);
+    const recentVisibleMessage = allMessages.find(message => !message?.revoked?.revokedBy?.includes(currentUser));
+    
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -123,13 +122,13 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {hasVisibleMessageInFirstGroup && !latestVisibleMessage && (
+                {hasVisibleMessageInFirstGroup && !recentVisibleMessage && (
                     <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
                         <HistoryClearedMessage />
                     </Box>
                 )}
 
-                {(!hasVisibleMessageInFirstGroup || latestVisibleMessage) && messages.map((dayGroup, index) => {
+                {(!hasVisibleMessageInFirstGroup || recentVisibleMessage) && messages.map((dayGroup, index) => {
                     const hasVisibleMessageInDayGroup = dayGroup.messages.some(
                         message => !message?.revoked?.revokedBy?.includes(currentUser)
                     );

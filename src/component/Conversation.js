@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
+import { Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -210,7 +210,7 @@ const Conversation = () => {
             <List>
                 {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
                     const { lastMessage, unseenMessageCount } = processUserMessages(chatMessageHistory, userName, currentUserName);
-                                                                                                                                                                     
+
                     return (
                         <ListItem
                             key={index}
@@ -226,11 +226,11 @@ const Conversation = () => {
                             onClick={() => handleClick(userName)}
                         >
                             <ListItemAvatar>
-                               <BadgeAvatars />
+                                <BadgeAvatars />
                             </ListItemAvatar>
                             <ListItemText
                                 primary={
-                                    <Box display="flex" justifyContent="space-between">
+                                    <Box display="flex" justifyContent="space-between" ml={0.7}>
                                         <Typography
                                             variant="body1"
                                             component="span"
@@ -264,7 +264,8 @@ const Conversation = () => {
                                         sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            alignItems: 'center'
+                                            alignItems: 'center',
+                                            ml: 0.7
                                         }}
                                         component={'span'}>
                                         <Typography

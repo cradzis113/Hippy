@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import Conversation from './Conversation';
 import RecentChats from './RecentChats';
@@ -8,10 +8,17 @@ import { useSetting } from '../context/SettingContext';
 import { Box, Fade } from '@mui/material';
 import { green } from '@mui/material/colors';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 
 const ChatComponent = () => {
     const { backState } = useSetting();
     const { currentChatUser } = useData()
+    const { userData } = useAuth()
+
+    useEffect(() => {
+        // console.log(Object.keys(userData.data.user.messageHistory))
+        // console.log((userData.data.user))
+    }, [userData])
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>

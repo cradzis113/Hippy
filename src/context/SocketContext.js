@@ -51,8 +51,7 @@ export const SocketProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        if (!socket) return
-
+        if (!socket) return;
         const status = isVisible && hasFocus ? 'online' : 'offline';
         socket.current.emit('updateUserStatus', { userName, status, hasFocus });
     }, [isVisible, hasFocus, userName, socket]);

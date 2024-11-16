@@ -25,7 +25,7 @@ const AuthPage = () => {
           </Box>
           <TextField
             fullWidth
-            error={invalidMessage === 'Invalid code' || invalidMessage === 'No tries left'}
+            error={invalidMessage === 'Invalid code' || invalidMessage === 'No tries left' || invalidMessage === 'code has expired'}
             label={invalidMessage ? invalidMessage : 'code'}
             autoComplete='off'
             slotProps={{
