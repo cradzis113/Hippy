@@ -186,6 +186,46 @@ const Conversation = () => {
         }
     };
 
+    const renderSeenStatus = (lastMessage, currentUserName, incomingMessage, messageHistory) => {
+        if (Object.keys(incomingMessage).length === 5) {
+            const originIndex = incomingMessage.listMessage.findIndex(
+                (msg) => msg.id === incomingMessage.originMessage.id
+            );
+
+            if (incomingMessage.originMessage.senderUserName !== currentUserName) {
+                return;
+            }
+
+            if (originIndex < incomingMessage.listMessage.length) {
+                return <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />;
+            } else {
+                return <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />;
+            }
+        }
+
+        if (lastMessage.senderUserName !== currentUserName) {
+            return null;
+        }
+
+        const lastMessageIndex = messageHistory.findIndex(
+            (message) => message.id === lastMessage.id
+        );
+
+        if (lastMessageIndex === messageHistory.length - 1) {
+            return lastMessage.seen ? (
+                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
+            ) : (
+                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
+            );
+        }
+        
+        return lastMessageIndex < messageHistory.length - 1 ? (
+            <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
+        ) : (
+            <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
+        );
+    };
+
     return (
         <Box
             sx={{
@@ -244,11 +284,7 @@ const Conversation = () => {
                                             {userName}
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {lastMessage?.senderUserName === currentUserName && (lastMessage?.seen ? (
-                                                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
-                                            ) : (
-                                                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
-                                            ))}
+                                            {renderSeenStatus(lastMessage, currentUserName, newMessage, chatMessageHistory[userName])}
                                             <Typography
                                                 variant="caption"
                                                 component="span"

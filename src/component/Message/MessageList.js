@@ -107,7 +107,7 @@ const MessageList = ({ user }) => {
 
     const allMessages = messages.flatMap(item => item.messages);
     const recentVisibleMessage = allMessages.find(message => !message?.revoked?.revokedBy?.includes(currentUser));
-    
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -136,7 +136,7 @@ const MessageList = ({ user }) => {
                     return (
                         <React.Fragment key={index}>
                             {hasVisibleMessageInDayGroup && (
-                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0, }}>
                                     <Chip label={moment(dayGroup.time).format('MMMM D')} />
                                 </Box>
                             )}
@@ -166,7 +166,6 @@ const MessageList = ({ user }) => {
                     );
                 })}
             </Box>
-
             <Box
                 sx={{
                     width: 650,
