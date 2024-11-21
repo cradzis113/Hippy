@@ -136,8 +136,8 @@ const MessageList = ({ user }) => {
                     return (
                         <React.Fragment key={index}>
                             {hasVisibleMessageInDayGroup && (
-                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0, }}>
-                                    <Chip label={moment(dayGroup.time).format('MMMM D')} />
+                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                                    <Chip label={moment(dayGroup.time).format('MMMM D')} sx={{ bgcolor: '#a5d6a7', color: 'background.paper' }} />
                                 </Box>
                             )}
                             {dayGroup.messages.map((item, msgIndex) => (
