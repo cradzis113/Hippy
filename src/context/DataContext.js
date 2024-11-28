@@ -8,9 +8,10 @@ export const DataProvider = ({ children }) => {
     const [searchResult, setSearchResult] = useState([]);
     const [currentChatUser, setCurrentChatUser] = useState({})
     const [messageBackState, setMessageBackState] = useState({})
+    const [carouselSlides, setCarouselSlides] = useState([]);
 
     return (
-        <DataContext.Provider value={{ searchResult, setSearchResult, currentChatUser, setCurrentChatUser, messageBackState, setMessageBackState }}>
+        <DataContext.Provider value={{ carouselSlides, setCarouselSlides, searchResult, setSearchResult, currentChatUser, setCurrentChatUser, messageBackState, setMessageBackState }}>
             {children}
         </DataContext.Provider>
     );

@@ -5,11 +5,11 @@ import Cookies from 'js-cookie';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({})
-
+  
   const login = () => setIsAuthenticated(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const logout = async () => {
     try {

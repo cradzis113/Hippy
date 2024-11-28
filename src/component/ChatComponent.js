@@ -8,17 +8,19 @@ import { useSetting } from '../context/SettingContext';
 import { Box, Fade } from '@mui/material';
 import { green } from '@mui/material/colors';
 import { useData } from '../context/DataContext';
+import PinnedHeader from './Pinned/PinnedHeader';
+import PinnedMessage from './Pinned/PinnedMessage';
+import UnpinAllMessagesButton from './Pinned/UnpinButton';
+import PinnedIndex from './Pinned/PinnedIndex';
 import { useAuth } from '../context/AuthContext';
 
 const ChatComponent = () => {
     const { backState } = useSetting();
-    const { currentChatUser } = useData()
+    const { currentChatUser } = useData();
+    const o = currentChatUser?.userName
     const { userData } = useAuth()
+    const n = userData?.data?.user?.pinnedInfo
 
-    useEffect(() => {
-        // console.log(Object.keys(userData.data.user.messageHistory))
-        // console.log((userData.data.user))
-    }, [userData])
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -48,6 +50,7 @@ const ChatComponent = () => {
             >
                 {Object.keys(currentChatUser).length > 0 && (
                     <>
+                        {/* <PinnedIndex /> */}
                         <UserHeader user={currentChatUser} />
                         <MessageList user={currentChatUser} />
                     </>

@@ -11,13 +11,17 @@ import BadgeAvatars from './BadgeAvatars';
 const Conversation = () => {
     const socket = useSocket();
     const { userData } = useAuth();
-    const { setCurrentChatUser, messageBackState } = useData();
+    const { setCurrentChatUser, messageBackState, setCarouselSlides, carouselSlides } = useData();
 
     const initialMessageHistory = userData?.data?.user?.messageHistory || {};
     const currentUserName = userData?.data?.user?.userName || '';
 
     const [newMessage, setNewMessage] = useState('');
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
+
+    const [userTarget, setUserTarget] = useState('')
+    const pinnedInfo = userData?.data?.user?.pinnedInfo || {};
+    const pinnedMessages = pinnedInfo[userTarget] || [];
 
     const formatTime = (timestamp) => {
         if (!timestamp) {
@@ -40,6 +44,7 @@ const Conversation = () => {
                 if (error) {
                     console.error('Search error:', error);
                 } else {
+                    setUserTarget(results[0].userName)
                     setCurrentChatUser(results[0]);
                     socket.current.emit('chatEvent', {
                         recipientUserName: results[0].userName,
@@ -129,49 +134,6 @@ const Conversation = () => {
         return { lastMessage, unseenMessageCount };
     };
 
-    useEffect(() => {
-        if (!socket.current || !userData?.data?.user) return;
-
-        const notificationData = (data) => {
-            setNewMessage(data);
-        };
-
-        const messageHistory = (data) => {
-            setChatMessageHistory(data);
-        };
-
-        const readMessages = (data) => {
-            setChatMessageHistory(data.messageHistory);
-        };
-
-        const handleUserData = (userData) => {
-            setChatMessageHistory(userData.messageHistory);
-        };
-
-        socket.current.emit('getUserData', currentUserName);
-        socket.current.on('connect', () => {
-            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' });
-        });
-
-        socket.current.on('notification', notificationData);
-        socket.current.on('readMessages', readMessages);
-        socket.current.on('receiveUserData', handleUserData)
-        socket.current.on('messageHistoryUpdate', messageHistory);
-
-        return () => {
-            socket.current.off('readMessages', readMessages);
-            socket.current.off('notification', notificationData);
-            socket.current.off('receiveUserData', handleUserData);
-            socket.current.off('messageHistoryUpdate', messageHistory);
-        };
-    }, [socket.current]);
-
-    useEffect(() => {
-        if (Object.keys(messageBackState).length > 0) {
-            setChatMessageHistory(messageBackState);
-        }
-    }, [messageBackState]);
-
     const shouldDisplayMessage = (lastMessage, unreadMessageCount) => {
         if (Object.keys(lastMessage).length > 1) {
             if (lastMessage.message.includes(`${lastMessage.senderUserName} đã thu hồi một tin nhắn`)) {
@@ -218,13 +180,68 @@ const Conversation = () => {
                 <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
             );
         }
-        
+
         return lastMessageIndex < messageHistory.length - 1 ? (
             <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
         ) : (
             <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
         );
     };
+
+    useEffect(() => {
+        if (!socket.current || !userData?.data?.user) return;
+
+        const notificationData = (data) => {
+            setNewMessage(data);
+        };
+
+        const messageHistory = (data) => {
+            setChatMessageHistory(data);
+        };
+
+        const readMessages = (data) => {
+            setChatMessageHistory(data.messageHistory);
+        };
+
+        const handleUserData = (userData) => {
+            setChatMessageHistory(userData.messageHistory);
+        };
+
+        const handleCarouselDataUpdate = (carouselData) => {
+            setCarouselSlides(carouselData);
+        };
+
+        socket.current.emit('getUserData', currentUserName);
+        socket.current.on('connect', () => {
+            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' });
+        });
+
+        socket.current.on('notification', notificationData);
+        socket.current.on('readMessages', readMessages);
+        socket.current.on('receiveUserData', handleUserData)
+        socket.current.on('messageHistoryUpdate', messageHistory);
+        socket.current.on('carouselDataUpdate', handleCarouselDataUpdate);
+
+        return () => {
+            socket.current.off('readMessages', readMessages);
+            socket.current.off('notification', notificationData);
+            socket.current.off('receiveUserData', handleUserData);
+            socket.current.off('messageHistoryUpdate', messageHistory);
+            socket.current.off('carouselDataUpdate', handleCarouselDataUpdate);
+        };
+    }, [socket.current]);
+
+    useEffect(() => {
+        if (Object.keys(messageBackState).length > 0) {
+            setChatMessageHistory(messageBackState);
+        }
+    }, [messageBackState]);
+
+    useEffect(() => {
+        if (carouselSlides.length < 1) {
+            setCarouselSlides(pinnedMessages)
+        }
+    }, [carouselSlides]);
 
     return (
         <Box

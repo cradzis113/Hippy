@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     IconButton,
@@ -13,19 +13,23 @@ import {
 import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MessageRecallDialog from './MessageRecallDialog';
+import { useSocket } from '../../context/SocketContext';
+import { useData } from '../../context/DataContext';
 
 const MessageActions = ({
     item,
     popoverAnchorEl,
-    dotAnchor, // cần được đổi tên thành actionMenuAnchorEl
+    dotAnchor,
     currentUser,
     handleReply,
-    handleDotAnchor, // cần được đổi tên thành handleActionMenuOpen
+    handleDotAnchor,
     currentPopoverAnchorEl,
     handlePopoverOpen,
     handlePopoverClose,
     handleRetrieveMessages,
 }) => {
+    const socket = useSocket()
+    const { carouselSlides } = useData()
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleOpenDialog = () => {
@@ -40,12 +44,22 @@ const MessageActions = ({
         handleRetrieveMessages(item, visibilityOption);
     };
 
-    const handleClick = () => {
+    const handleRevokeMessage = () => {
         if (currentUser === item.senderUserName) {
             handleOpenDialog();
         } else {
             handleRetrieveMessages(item, 'onlyYou');
         }
+    };
+
+    const handlePinMessage = () => {
+        if (carouselSlides.some(o => o.message === item.message)) {
+            socket.current.emit('pinMessage', item, 'unpin');
+        } else {
+            socket.current.emit('pinMessage', item, 'pin');
+        }
+
+        handlePopoverClose();
     };
 
     return (
@@ -77,12 +91,12 @@ const MessageActions = ({
                     >
                         <List sx={{ width: 150 }}>
                             <ListItem disablePadding>
-                                <ListItemButton>
-                                    <Typography variant="body1">Ghim</Typography>
+                                <ListItemButton onClick={handlePinMessage}>
+                                    <Typography variant="body1">{carouselSlides.some(o => o.message === item.message) ? 'bỏ ghim' : 'Ghim'}</Typography>
                                 </ListItemButton>
                             </ListItem>
                             <ListItem disablePadding>
-                                <ListItemButton onClick={handleClick}>
+                                <ListItemButton onClick={handleRevokeMessage}>
                                     <Typography variant="body1">Thu hồi</Typography>
                                 </ListItemButton>
                             </ListItem>

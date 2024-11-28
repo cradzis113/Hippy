@@ -14,76 +14,63 @@ import {
     ListItemAvatar,
     ListItemText,
     ClickAwayListener,
-    Paper,
 } from '@mui/material';
-import { useSocket } from '../context/SocketContext';
 import SearchIcon from '@mui/icons-material/Search';
 import CallIcon from '@mui/icons-material/Call';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
 import useDebounce from '../utils/debounce';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { useSocket } from '../context/SocketContext';
+import VerticalCarousel from './VerticalCarousel';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 
 const UserHeader = ({ user }) => {
     const socket = useSocket();
     const { userData } = useAuth();
-    const inputRef = useRef(null);
+    const { carouselSlides } = useData()
 
-    const [searchText, setSearchText] = useState('');
-    const [userStatus, setUserStatus] = useState({});
-    const [searchResult, setSearchResult] = useState([]);
-    const [searchState, setSearchState] = useState(false);
-    const [resultState, setResultState] = useState(false);
+    const searchInputRef = useRef(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentUserStatus, setCurrentUserStatus] = useState({});
+
+    const [searchResults, setSearchResults] = useState([]);
+
+    const [isSearchActive, setIsSearchActive] = useState(false);
+    const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
+
     const [debouncedSearch, loading] = useDebounce((value) => handleSearch(value), 500);
-
-    useEffect(() => {
-        if (user) {
-            setUserStatus(user);
-        }
-
-        const handleUserStatusUpdate = (data) => {
-            if (data.userName === user.userName) {
-                setUserStatus(data);
-            }
-        };
-
-        if (socket) {
-            socket.current.on('userStatusUpdated', handleUserStatusUpdate);
-            return () => {
-                socket.current.off('userStatusUpdated', handleUserStatusUpdate);
-            };
-        }
-    }, [socket, user]);
 
     const handleSearch = (searchTerm) => {
         if (searchTerm.trim() === '') {
-            return setSearchResult([])
+            return setSearchResults([]);
         }
 
         const currentUser = userData?.data?.user?.userName;
         const messageHistoryForUser = user.messageHistory[currentUser];
-        const filteredMessages = messageHistoryForUser.filter((i) => i.message.includes(searchTerm));
-        setResultState(true);
+        const filteredMessages = messageHistoryForUser.filter((message) => message.message.includes(searchTerm));
+        setIsSearchResultsVisible(true);
 
         if (filteredMessages.length === 0) {
-            return setSearchResult('empty')
+            return setSearchResults('empty');
         }
 
-        setSearchResult(filteredMessages);
+        setSearchResults(filteredMessages);
     };
 
     const handleInputChange = (event) => {
         const value = event.target.value;
-        setSearchText(value);
+        setSearchQuery(value);
         debouncedSearch(value);
     };
 
     const handleClose = () => {
-        if (searchText) {
-            setSearchText('');
-            setSearchResult([])
+        if (searchQuery) {
+            setSearchQuery('');
+            setSearchResults([]);
         } else {
-            setSearchState(false);
+            setIsSearchActive(false);
         }
     };
 
@@ -94,6 +81,26 @@ const UserHeader = ({ user }) => {
         return `${start}...${end}`;
     };
 
+    useEffect(() => {
+        if (user) {
+            setCurrentUserStatus(user);
+        }
+
+        const handleUserStatusUpdate = (data) => {
+            if (data.userName === user.userName) {
+                setCurrentUserStatus(data);
+            }
+        };
+
+        if (socket) {
+
+            socket.current.on('userStatusUpdated', handleUserStatusUpdate);
+            return () => {
+                socket.current.off('userStatusUpdated', handleUserStatusUpdate);
+            };
+        }
+    }, [socket, user]);
+
     return (
         <AppBar position="static" elevation={1} sx={{ backgroundColor: 'background.paper' }}>
             <Toolbar>
@@ -103,24 +110,24 @@ const UserHeader = ({ user }) => {
                         alt="User avatar"
                         sx={{ width: 40, height: 40, mr: 2 }}
                     />
-                    {!searchState ? (
+                    {!isSearchActive ? (
                         <Box>
                             <Typography variant="h6" fontWeight="bold" color="black" lineHeight={1.2}>
-                                {userStatus.userName}
+                                {currentUserStatus.userName}
                             </Typography>
                             <Typography
                                 variant="body2"
-                                color={userStatus.status === 'online' ? 'primary' : 'textSecondary'}
+                                color={currentUserStatus.status === 'online' ? 'primary' : 'textSecondary'}
                                 fontWeight={500}
                             >
-                                {userStatus.status === 'online' ? userStatus.status : userStatus.lastSeenMessage}
+                                {currentUserStatus.status === 'online' ? currentUserStatus.status : currentUserStatus.lastSeenMessage}
                             </Typography>
                         </Box>
                     ) : (
                         <ClickAwayListener
                             onClickAway={(event) => {
-                                if (inputRef.current && !inputRef.current.contains(event.target)) {
-                                    setResultState(false);
+                                if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+                                    setIsSearchResultsVisible(false);
                                 }
                             }}
                         >
@@ -138,14 +145,14 @@ const UserHeader = ({ user }) => {
                                 }}
                             >
                                 <TextField
-                                    ref={inputRef}
+                                    ref={searchInputRef}
                                     fullWidth
                                     autoFocus
                                     variant="outlined"
                                     autoComplete="off"
-                                    value={searchText}
+                                    value={searchQuery}
                                     onChange={handleInputChange}
-                                    onFocus={() => setResultState(true)}
+                                    onFocus={() => setIsSearchResultsVisible(true)}
                                     sx={{
                                         borderTopLeftRadius: '12px',
                                         borderTopRightRadius: '12px',
@@ -202,7 +209,7 @@ const UserHeader = ({ user }) => {
                                         },
                                     }}
                                 >
-                                    {searchResult === 'empty' && (
+                                    {searchResults === 'empty' && (
                                         <>
                                             <Divider />
                                             <Typography
@@ -213,15 +220,15 @@ const UserHeader = ({ user }) => {
                                                     my: 0.5,
                                                 }}
                                             >
-                                                There were no results for "{truncateText(searchText)}". Try a new search.
+                                                There were no results for "{truncateText(searchQuery)}". Try a new search.
                                             </Typography>
                                         </>
                                     )}
-                                    {searchResult !== 'empty' && searchResult.length > 0 && resultState && (
+                                    {searchResults !== 'empty' && searchResults.length > 0 && isSearchResultsVisible && (
                                         <>
                                             <Divider />
                                             <List>
-                                                {searchResult.map((message) => (
+                                                {searchResults.map((message) => (
                                                     <ListItem
                                                         disablePadding
                                                         key={message.id}
@@ -273,9 +280,15 @@ const UserHeader = ({ user }) => {
                         </ClickAwayListener>
                     )}
                 </Box>
-                {!searchState && (
+                {!isSearchActive && (
                     <>
-                        <IconButton onClick={() => setSearchState(true)}>
+                        {carouselSlides?.length > 0 && <VerticalCarousel slides={carouselSlides} />}
+                        {carouselSlides?.length > 1 && (
+                            <IconButton>
+                                <PushPinOutlinedIcon />
+                            </IconButton>
+                        )}
+                        <IconButton onClick={() => setIsSearchActive(true)}>
                             <SearchIcon />
                         </IconButton>
                         <IconButton>
