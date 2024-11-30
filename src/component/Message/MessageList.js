@@ -7,10 +7,11 @@ import useSendMessage from '../../hook/UseSendMessage';
 import { useSocket } from '../../context/SocketContext';
 
 import moment from 'moment';
-import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography } from '@mui/material';
+import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography, Checkbox } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import HistoryClearedMessage from '../HistoryClearedMessage';
+import MessageDeletionNotification from './MessageDeletionNotification';
 import ReplyIcon from '@mui/icons-material/Reply';
+import { RadioButtonUnchecked, RadioButtonChecked } from '@mui/icons-material';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();
@@ -21,6 +22,7 @@ const MessageList = ({ user }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
+    const [selectedMessages, setSelectedMessages] = useState([]);
 
     useEffect(() => {
         const messageHistory = user?.messageHistory;
@@ -108,6 +110,16 @@ const MessageList = ({ user }) => {
     const allMessages = messages.flatMap(item => item.messages);
     const recentVisibleMessage = allMessages.find(message => !message?.revoked?.revokedBy?.includes(currentUser));
 
+    const handleRadioChange = (event, message) => {
+        const isSelected = selectedMessages.some(msg => msg.id === message.id);
+
+        if (isSelected) {
+            setSelectedMessages(selectedMessages.filter(msg => msg.id !== message.id));
+        } else {
+            setSelectedMessages([...selectedMessages, message]);
+        }
+    };
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -124,7 +136,7 @@ const MessageList = ({ user }) => {
             >
                 {hasVisibleMessageInFirstGroup && !recentVisibleMessage && (
                     <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
-                        <HistoryClearedMessage />
+                        <MessageDeletionNotification />
                     </Box>
                 )}
 
@@ -149,15 +161,35 @@ const MessageList = ({ user }) => {
                                                 padding: 1,
                                                 display: 'flex',
                                                 margin: '0 auto',
-                                                flexDirection: item.senderUserName === currentUser ? 'row-reverse' : 'row',
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
                                             }}
                                         >
-                                            <MessageItem
-                                                item={item}
-                                                currentUser={currentUser}
-                                                setUserReplied={setUserReplied}
-                                                setMessageReplied={setMessageReplied}
+                                            <Checkbox
+                                                size="small"
+                                                checked={selectedMessages.some(msg => msg.id === item.id)}
+                                                onChange={(e) => handleRadioChange(e, item)}
+                                                icon={<RadioButtonUnchecked />}
+                                                checkedIcon={<RadioButtonChecked />}
+                                                sx={{
+                                                    marginRight: 1,
+                                                    '& .MuiSvgIcon-root': {
+                                                        fontSize: 20
+                                                    }
+                                                }}
                                             />
+                                            <Box sx={{
+                                                flex: 1,
+                                                display: 'flex',
+                                                justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start'
+                                            }}>
+                                                <MessageItem
+                                                    item={item}
+                                                    currentUser={currentUser}
+                                                    setUserReplied={setUserReplied}
+                                                    setMessageReplied={setMessageReplied}
+                                                />
+                                            </Box>
                                         </Box>
                                     )}
                                 </React.Fragment>

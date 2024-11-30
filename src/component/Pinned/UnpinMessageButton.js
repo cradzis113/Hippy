@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Box } from '@mui/material';
 
-const UnpinButton = ({ onClick }) => {
+const UnpinMessageButton = ({ onClick }) => {
   return (
     <Box
       sx={{
@@ -21,8 +21,9 @@ const UnpinButton = ({ onClick }) => {
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
           borderRadius: '12px',
           padding: '8px 16px',
-          maxWidth: '200px', // Limit the maximum width
-          width: '100%', // Responsive scaling
+          maxWidth: '200px',
+          width: '100%',
+          marginBottom: 2,
           '&:hover': {
             backgroundColor: '#f5f5f5',
           },
@@ -34,4 +35,4 @@ const UnpinButton = ({ onClick }) => {
   );
 };
 
-export default UnpinButton;
+export default UnpinMessageButton;

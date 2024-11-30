@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 
-const HistoryClearedMessage = () => {
+const MessageDeletionNotification = () => {
   return (
     <Box
       display="flex"
@@ -29,4 +29,4 @@ const HistoryClearedMessage = () => {
   );
 };
 
-export default HistoryClearedMessage;
+export default MessageDeletionNotification;

@@ -4,13 +4,13 @@ import { Box, TextField, InputAdornment } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import CloseSharpIcon from '@mui/icons-material/CloseSharp';
 import SearchIcon from '@mui/icons-material/Search';
-import useDebounce from '../utils/debounce';
-import { useSetting } from '../context/SettingContext';
-import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
+import useDebounce from '../../utils/debounce';
+import { useSetting } from '../../context/SettingContext';
+import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 
-const SearchBar = () => {
+const ChatSearch = () => {
     const [isFocused, setIsFocused] = useState(false);
     const [query, setQuery] = useState('');
 
@@ -121,4 +121,4 @@ const SearchBar = () => {
     );
 };
 
-export default SearchBar;
+export default ChatSearch;

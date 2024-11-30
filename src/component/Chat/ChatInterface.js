@@ -1,26 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ChatHeader from './ChatHeader';
-import Conversation from './Conversation';
-import RecentChats from './RecentChats';
-import UserHeader from './UserHeader';
-import MessageList from '../component/Message/MessageList';
-import { useSetting } from '../context/SettingContext';
+import Conversation from './ConversationList';
+import RecentChats from './RecentConversations';
+import MessageList from '../Message/MessageList';
+import { useSetting } from '../../context/SettingContext';
 import { Box, Fade } from '@mui/material';
 import { green } from '@mui/material/colors';
-import { useData } from '../context/DataContext';
-import PinnedHeader from './Pinned/PinnedHeader';
-import PinnedMessage from './Pinned/PinnedMessage';
-import UnpinAllMessagesButton from './Pinned/UnpinButton';
-import PinnedIndex from './Pinned/PinnedIndex';
-import { useAuth } from '../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import PinnedMessagesList from '../Pinned/PinnedMessagesList';
+import UserProfileHeader from './UserProfileHeader';
 
-const ChatComponent = () => {
+const ChatInterface = () => {
     const { backState } = useSetting();
     const { currentChatUser } = useData();
-    const o = currentChatUser?.userName
-    const { userData } = useAuth()
-    const n = userData?.data?.user?.pinnedInfo
-
+    const { pinnedViewActive } = useSetting()
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -50,9 +43,13 @@ const ChatComponent = () => {
             >
                 {Object.keys(currentChatUser).length > 0 && (
                     <>
-                        {/* <PinnedIndex /> */}
-                        <UserHeader user={currentChatUser} />
-                        <MessageList user={currentChatUser} />
+                        {pinnedViewActive ? <PinnedMessagesList /> : (
+                            <>
+                                <UserProfileHeader user={currentChatUser} />
+                                <MessageList user={currentChatUser} />
+                            </>
+                        )}
+
                     </>
                 )}
             </Box>
@@ -60,4 +57,4 @@ const ChatComponent = () => {
     );
 };
 
-export default ChatComponent;
+export default ChatInterface;

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import { useSocket } from '../../context/SocketContext';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import BadgeAvatars from './BadgeAvatars';
 
-const Conversation = () => {
+const ConversationList = () => {
     const socket = useSocket();
     const { userData } = useAuth();
     const { setCurrentChatUser, messageBackState, setCarouselSlides, carouselSlides } = useData();
@@ -351,4 +351,4 @@ const Conversation = () => {
     );
 };
 
-export default Conversation;
+export default ConversationList;

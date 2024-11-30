@@ -1,6 +1,6 @@
 import React from 'react';
 import UserMenuToggle from './UserMenuToggle'; 
-import Search from './Search';  
+import ChatSearch from './ChatSearch';
 import { Box } from '@mui/material';
 
 const ChatHeader = () => {
@@ -10,7 +10,7 @@ const ChatHeader = () => {
                 <UserMenuToggle />
             </Box>
             <Box sx={{ flex: 8, display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                <Search />
+                <ChatSearch />
             </Box>
         </Box>
     );

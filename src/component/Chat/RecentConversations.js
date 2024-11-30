@@ -1,13 +1,13 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Tabs, Tab, Box, Avatar, Typography, useMediaQuery, Divider } from '@mui/material';
-import { useData } from '../context/DataContext';
-import { useSetting } from '../context/SettingContext';
-import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import { useSetting } from '../../context/SettingContext';
+import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
 
 const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Apps', 'Media'];
 
-const RecentChats = forwardRef((props, ref) => {
+const RecentConversations = forwardRef((props, ref) => {
     const containerRef = useRef(null);
     const [value, setValue] = useState(0);
 
@@ -137,4 +137,4 @@ const RecentChats = forwardRef((props, ref) => {
     );
 });
 
-export default RecentChats;
+export default RecentConversations;

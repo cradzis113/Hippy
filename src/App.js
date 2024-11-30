@@ -1,5 +1,5 @@
 import AuthPage from "./page/AuthPage";
-import ChatComponent from "./component/ChatComponent";
+import ChatInterface from "./component/Chat/ChatInterface";
 import { useAuth } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 import { SettingProvider } from "./context/SettingContext";
@@ -35,7 +35,7 @@ function App() {
         <DataProvider>
           <SocketProvider>
             <SettingProvider>
-              <ChatComponent />
+              <ChatInterface />
             </SettingProvider>
           </SocketProvider>
         </DataProvider>

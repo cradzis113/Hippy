@@ -19,17 +19,19 @@ import SearchIcon from '@mui/icons-material/Search';
 import CallIcon from '@mui/icons-material/Call';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
-import useDebounce from '../utils/debounce';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { useSocket } from '../context/SocketContext';
+import useDebounce from '../../utils/debounce';
+import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import { useSocket } from '../../context/SocketContext';
 import VerticalCarousel from './VerticalCarousel';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
+import { useSetting } from '../../context/SettingContext';
 
-const UserHeader = ({ user }) => {
+const UserProfileHeader = ({ user }) => {
     const socket = useSocket();
     const { userData } = useAuth();
     const { carouselSlides } = useData()
+    const { setPinnedViewActive } = useSetting()
 
     const searchInputRef = useRef(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -284,7 +286,7 @@ const UserHeader = ({ user }) => {
                     <>
                         {carouselSlides?.length > 0 && <VerticalCarousel slides={carouselSlides} />}
                         {carouselSlides?.length > 1 && (
-                            <IconButton>
+                            <IconButton onClick={() => setPinnedViewActive(true)}>
                                 <PushPinOutlinedIcon />
                             </IconButton>
                         )}
@@ -304,4 +306,4 @@ const UserHeader = ({ user }) => {
     );
 };
 
-export default UserHeader;
+export default UserProfileHeader;

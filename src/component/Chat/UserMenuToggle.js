@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSetting } from '../context/SettingContext';
+import { useSetting } from '../../context/SettingContext';
 import { Menu, MenuItem, IconButton, ListItemIcon, ListItemText } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import InboxIcon from '@mui/icons-material/Inbox';
@@ -7,7 +7,7 @@ import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const UserMenuToggle = () => {
   const [anchorEl, setAnchorEl] = useState(null);

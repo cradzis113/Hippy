@@ -3,59 +3,66 @@ import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { green } from "@mui/material/colors";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
-const PinnedMessage = () => {
+const groupMessagesByDate = (messages) => {
+    const groupedMessages = messages.reduce((acc, msg) => {
+        const dateKey = moment(msg.time).format("YYYY-MM-DD");
+        if (!acc[dateKey]) {
+            acc[dateKey] = { earliestTime: msg.time, messages: [] };
+        }
+        acc[dateKey].messages.push(msg);
+        if (msg.time < acc[dateKey].earliestTime) {
+            acc[dateKey].earliestTime = msg.time;
+        }
+        return acc;
+    }, {});
+
+    return Object.entries(groupedMessages).map(([date, group]) => ({
+        time: group.earliestTime,
+        messages: group.messages,
+    }));
+};
+
+const PinnedMessageItem = () => {
     const { userData } = useAuth();
-    const { currentChatUser } = useData();
+    const { currentChatUser, carouselSlides } = useData();
 
-    const pinnedMessages = userData?.data?.user?.pinnedInfo || {};
+    const pinnedMessages = useMemo(
+        () => userData?.data?.user?.pinnedInfo || {},
+        [userData]
+    );
     const currentChatUserName = currentChatUser?.userName;
     const currentUser = userData?.data?.user?.userName;
 
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
-        if (!pinnedMessages || !currentChatUserName || !pinnedMessages[currentChatUserName]) {
+        if (carouselSlides.length > 0) {
+            setMessages(groupMessagesByDate(carouselSlides));
+        } else if (currentChatUserName && pinnedMessages[currentChatUserName]) {
+            setMessages(groupMessagesByDate(pinnedMessages[currentChatUserName]));
+        } else {
             setMessages([]);
-            return;
         }
+    }, [carouselSlides, currentChatUserName, pinnedMessages]);
 
-        const groupedMessages = pinnedMessages[currentChatUserName].reduce((acc, msg) => {
-            const dateKey = moment(msg.time).format("YYYY-MM-DD");
-
-            if (!acc[dateKey]) {
-                acc[dateKey] = { earliestTime: msg.time, messages: [] };
-            }
-
-            acc[dateKey].messages.push(msg);
-            if (msg.time < acc[dateKey].earliestTime) {
-                acc[dateKey].earliestTime = msg.time;
-            }
-
-            return acc;
-        }, {});
-
-        // Chuyển đổi thành mảng để dễ xử lý
-        const formattedMessages = Object.entries(groupedMessages).map(([date, group]) => ({
-            time: group.earliestTime,
-            messages: group.messages,
-        }));
-
-        setMessages(formattedMessages);
-    }, [pinnedMessages, currentChatUserName]);
+    const scrollBarStyles = {
+        '&::-webkit-scrollbar': { width: '5px' },
+        '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
+    };
 
     return (
         <Box
             sx={{
                 flexGrow: 1,
-                overflowY: 'auto',
-                position: 'relative',
-                '&::-webkit-scrollbar': { width: '5px' },
-                '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
-                '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
-                '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
-            }}>
+                overflowY: "auto",
+                position: "relative",
+                ...scrollBarStyles,
+            }}
+        >
             {messages.map((dayGroup, index) => (
                 <Box key={index}>
                     <Box
@@ -109,4 +116,4 @@ const PinnedMessage = () => {
     );
 };
 
-export default PinnedMessage;
+export default PinnedMessageItem;
