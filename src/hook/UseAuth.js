@@ -46,7 +46,7 @@ const UseAuth = () => {
   const handleCodeSubmission = async (code, email) => {
     try {
       const response = await fetchAPI('http://localhost:3001/api/auth', 'POST', { code, email }, null, true);
-      if (response.status === 201) {
+      if (response.status === 200 || response.status === 201) {
         login();
         window.location.reload();
         // setUserData(response);

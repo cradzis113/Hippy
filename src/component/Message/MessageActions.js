@@ -9,12 +9,19 @@ import {
     ListItem,
     ListItemButton,
     Typography,
+    ListItemIcon,
+    ListItemText,
 } from '@mui/material';
 import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MessageRecallDialog from './MessageRecallDialog';
 import { useSocket } from '../../context/SocketContext';
 import { useData } from '../../context/DataContext';
+import PushPinIcon from '@mui/icons-material/PushPin';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ForwardIcon from '@mui/icons-material/Forward';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useSetting } from '../../context/SettingContext';
 
 const MessageActions = ({
     item,
@@ -28,8 +35,9 @@ const MessageActions = ({
     handlePopoverClose,
     handleRetrieveMessages,
 }) => {
-    const socket = useSocket()
-    const { carouselSlides } = useData()
+    const socket = useSocket();
+    const { setActiveSelectedMessage } = useSetting();
+    const { carouselSlides, setSelectedMessages } = useData();
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleOpenDialog = () => {
@@ -62,6 +70,12 @@ const MessageActions = ({
         handlePopoverClose();
     };
 
+    const handleSelectMessage = () => {
+        handlePopoverClose();
+        setActiveSelectedMessage(true);
+        setSelectedMessages(prev => [...prev, item]);
+    };
+
     return (
         <>
             <Popper
@@ -89,20 +103,45 @@ const MessageActions = ({
                         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                         transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                     >
-                        <List sx={{ width: 150 }}>
+                        <List >
                             <ListItem disablePadding>
                                 <ListItemButton onClick={handlePinMessage}>
-                                    <Typography variant="body1">{carouselSlides.some(o => o.message === item.message) ? 'bỏ ghim' : 'Ghim'}</Typography>
+                                    <ListItemIcon sx={{ minWidth: 45 }}>
+                                        <PushPinIcon />
+                                    </ListItemIcon>
+                                    <ListItemText>
+                                        <Typography variant="body1">{carouselSlides.some(o => o.message === item.message) ? 'bỏ ghim' : 'Ghim'}</Typography>
+                                    </ListItemText>
                                 </ListItemButton>
                             </ListItem>
                             <ListItem disablePadding>
                                 <ListItemButton onClick={handleRevokeMessage}>
-                                    <Typography variant="body1">Thu hồi</Typography>
+                                    <ListItemIcon sx={{ minWidth: 45 }}>
+                                        <DeleteOutlineIcon />
+                                    </ListItemIcon>
+                                    <ListItemText>
+                                        <Typography variant="body1">Thu hồi</Typography>
+                                    </ListItemText>
                                 </ListItemButton>
                             </ListItem>
                             <ListItem disablePadding>
                                 <ListItemButton>
-                                    <Typography variant="body1">Chuyển tiếp</Typography>
+                                    <ListItemIcon sx={{ minWidth: 45 }}>
+                                        <ForwardIcon />
+                                    </ListItemIcon>
+                                    <ListItemText>
+                                        <Typography variant="body1">Chuyển tiếp</Typography>
+                                    </ListItemText>
+                                </ListItemButton>
+                            </ListItem>
+                            <ListItem disablePadding>
+                                <ListItemButton onClick={handleSelectMessage}>
+                                    <ListItemIcon sx={{ minWidth: 45 }}>
+                                        <CheckCircleOutlineIcon />
+                                    </ListItemIcon>
+                                    <ListItemText>
+                                        <Typography variant="body1">Lựa chọn</Typography>
+                                    </ListItemText>
                                 </ListItemButton>
                             </ListItem>
                         </List>

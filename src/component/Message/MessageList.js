@@ -12,17 +12,30 @@ import CloseIcon from '@mui/icons-material/Close';
 import MessageDeletionNotification from './MessageDeletionNotification';
 import ReplyIcon from '@mui/icons-material/Reply';
 import { RadioButtonUnchecked, RadioButtonChecked } from '@mui/icons-material';
+import { useSetting } from '../../context/SettingContext';
+import MessageSelectionBar from './MessageSelectionBar';
+import { useData } from '../../context/DataContext';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();
     const { userData } = useAuth();
 
-    const { message, setMessage, sendMessage, userReplied, setUserReplied, messageReplied, setMessageReplied } = useSendMessage();
+    const {
+        message,
+        setMessage,
+        sendMessage,
+        userReplied,
+        setUserReplied,
+        messageReplied,
+        setMessageReplied
+    } = useSendMessage();
 
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
-    const [selectedMessages, setSelectedMessages] = useState([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+    const { activeSelectedMessage } = useSetting();
+    const { selectedMessages, setSelectedMessages } = useData();
 
     useEffect(() => {
         const messageHistory = user?.messageHistory;
@@ -165,19 +178,21 @@ const MessageList = ({ user }) => {
                                                 alignItems: 'center',
                                             }}
                                         >
-                                            <Checkbox
-                                                size="small"
-                                                checked={selectedMessages.some(msg => msg.id === item.id)}
-                                                onChange={(e) => handleRadioChange(e, item)}
-                                                icon={<RadioButtonUnchecked />}
-                                                checkedIcon={<RadioButtonChecked />}
-                                                sx={{
-                                                    marginRight: 1,
-                                                    '& .MuiSvgIcon-root': {
-                                                        fontSize: 20
-                                                    }
-                                                }}
-                                            />
+                                            {activeSelectedMessage && (
+                                                <Checkbox
+                                                    size="small"
+                                                    checked={selectedMessages.some(msg => msg.id === item.id)}
+                                                    onChange={(e) => handleRadioChange(e, item)}
+                                                    icon={<RadioButtonUnchecked />}
+                                                    checkedIcon={<RadioButtonChecked />}
+                                                    sx={{
+                                                        marginRight: 1,
+                                                        '& .MuiSvgIcon-root': {
+                                                            fontSize: 20
+                                                        }
+                                                    }}
+                                                />
+                                            )}
                                             <Box sx={{
                                                 flex: 1,
                                                 display: 'flex',
@@ -249,13 +264,21 @@ const MessageList = ({ user }) => {
                         </ListItem>
                     </List>
                 )}
-                <MessageInput
-                    message={message}
-                    setMessage={setMessage}
-                    handleSendMessage={handleSendMessage}
-                    showEmojiPicker={showEmojiPicker}
-                    setShowEmojiPicker={setShowEmojiPicker}
-                />
+                {activeSelectedMessage ? (
+                    <MessageSelectionBar
+                        selectedCount={selectedMessages.length}
+                        item={selectedMessages}
+                        currentUser={currentUser}
+                    />
+                ) : (
+                    <MessageInput
+                        message={message}
+                        setMessage={setMessage}
+                        handleSendMessage={handleSendMessage}
+                        showEmojiPicker={showEmojiPicker}
+                        setShowEmojiPicker={setShowEmojiPicker}
+                    />
+                )}
             </Box>
         </Box>
     );

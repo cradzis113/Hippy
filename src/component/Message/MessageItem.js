@@ -5,6 +5,7 @@ import RevokeMessage from './RevokeMessage';
 import MessageContent from './MessageContent';
 import MessageActions from './MessageActions';
 import { useSocket } from '../../context/SocketContext';
+import { useSetting } from '../../context/SettingContext';
 
 const MessageItem = ({
     item,
@@ -16,7 +17,8 @@ const MessageItem = ({
     const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
     const [currentPopoverAnchorEl, setCurrentPopoverAnchorEl] = useState(null);
     const [dotAnchor, setDotAnchor] = useState(null);
-
+    const { activeSelectedMessage } = useSetting();
+    
     const handlePopoverOpen = (element, index) => {
         setPopoverAnchorEl(index);
         setCurrentPopoverAnchorEl(element);
@@ -78,18 +80,20 @@ const MessageItem = ({
             onMouseEnter={(event) => handlePopoverOpen(event.currentTarget, item.id)}
         >
             <MessageContent item={item} currentUser={currentUser} formatTime={formatTime} />
-            <MessageActions
-                item={item}
-                dotAnchor={dotAnchor}
-                handleReply={handleReply}
-                currentUser={currentUser}
-                popoverAnchorEl={popoverAnchorEl}
-                handleDotAnchor={handleActionMenuOpen}
-                handlePopoverOpen={handlePopoverOpen}
-                handlePopoverClose={handlePopoverClose}
-                currentPopoverAnchorEl={currentPopoverAnchorEl}
-                handleRetrieveMessages={handleRetrieveMessages}
-            />
+            {!activeSelectedMessage && (
+                <MessageActions
+                    item={item}
+                    dotAnchor={dotAnchor}
+                    handleReply={handleReply}
+                    currentUser={currentUser}
+                    popoverAnchorEl={popoverAnchorEl}
+                    handleDotAnchor={handleActionMenuOpen}
+                    handlePopoverOpen={handlePopoverOpen}
+                    handlePopoverClose={handlePopoverClose}
+                    currentPopoverAnchorEl={currentPopoverAnchorEl}
+                    handleRetrieveMessages={handleRetrieveMessages}
+                />
+            )}
         </Box>
     );
 };

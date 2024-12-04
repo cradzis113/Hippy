@@ -5,9 +5,10 @@ const SettingContext = createContext();
 export const SettingProvider = ({ children }) => {
     const [backState, setBackState] = useState(false);
     const [pinnedViewActive, setPinnedViewActive] = useState(false);
+    const [activeSelectedMessage, setActiveSelectedMessage] = useState(false);
 
     return (
-        <SettingContext.Provider value={{ backState, setBackState, pinnedViewActive, setPinnedViewActive }}>
+        <SettingContext.Provider value={{ backState, setBackState, pinnedViewActive, setPinnedViewActive, activeSelectedMessage, setActiveSelectedMessage }}>
             {children}
         </SettingContext.Provider>
     );
