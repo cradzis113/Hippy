@@ -31,19 +31,45 @@ const MessageSelectionBar = ({
     let updatedData = {};
 
     const otherUserMessages = messageData.filter(msg => msg.senderUserName !== currentUser);
-    const currentUserMessages = messageData.filter(msg => msg.senderUserName === currentUser);
+    const currentUserMessages = messageData.filter(msg => msg.senderUserName === currentUser && !msg.revoked);
+    const currentUserRevokedMessages = messageData.filter(msg => msg.senderUserName === currentUser && msg.revoked);
 
-    if (currentUserMessages.length === 0 || otherUserMessages.length === 0) {
+    if ((currentUserMessages.length === 0 || currentUserRevokedMessages.length === 0) && otherUserMessages.length === 0) {
       updatedData = { messageData, currentUser, visibilityOption };
-    } else if (otherUserMessages.length > 0 && currentUserMessages.length > 0) {
+    } else if (otherUserMessages.length > 0 || currentUserMessages.length > 0 || currentUserRevokedMessages.length > 0) {
       if (visibilityOption === 'everyone') {
         updatedData = {
-          otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages },
-          currentUserMessages: { visibilityOption: 'everyone', messages: currentUserMessages },
+          ...(otherUserMessages.length > 0 && {
+            otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages }
+          }),
+          ...(currentUserMessages.length > 0 && {
+            currentUserMessages: { visibilityOption: 'everyone', messages: currentUserMessages }
+          }),
+          ...(currentUserRevokedMessages.length > 0 && {
+            currentUserRevokedMessages: { visibilityOption: 'onlyYou', messages: currentUserRevokedMessages }
+          }),
           currentUser
         };
       } else if (visibilityOption === 'onlyYou') {
-        updatedData = { messageData, currentUser, visibilityOption };
+        if (currentUserRevokedMessages.length > 0 && otherUserMessages.length > 0) { 
+          updatedData = {
+            currentUserRevokedMessages: { visibilityOption: 'onlyYou', messages: currentUserRevokedMessages },
+            otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages },
+            currentUser
+          }
+          return;
+        } 
+
+
+        updatedData = {
+          ...(otherUserMessages.length > 0 && {
+            otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages }
+          }),
+          ...(currentUserMessages.length > 0 && {
+            currentUserMessages: { visibilityOption: 'onlyYou', messages: currentUserMessages }
+          }),
+          currentUser
+        };
       }
     }
     setSelectedMessages([]);
@@ -53,8 +79,9 @@ const MessageSelectionBar = ({
 
   const handleOpenDialog = () => {
     const currentUserMessages = item.filter(msg => msg.senderUserName === currentUser);
+    const n = currentUserMessages.every(msg => msg.revoked)
 
-    if (currentUserMessages.length === 0) {
+    if (currentUserMessages.length === 0 || n) {
       handleRetrieveMessages(item, 'onlyYou');
     } else {
       setDialogOpen(true);
