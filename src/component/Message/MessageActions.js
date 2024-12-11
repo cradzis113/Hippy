@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     IconButton,
@@ -61,7 +61,7 @@ const MessageActions = ({
     };
 
     const handlePinMessage = () => {
-        if (carouselSlides.some(o => o.message === item.message)) {
+        if (carouselSlides.some(slide => slide.id === item.id)) {
             socket.current.emit('pinMessage', item, 'unpin');
         } else {
             socket.current.emit('pinMessage', item, 'pin');
@@ -110,7 +110,7 @@ const MessageActions = ({
                                         <PushPinIcon />
                                     </ListItemIcon>
                                     <ListItemText>
-                                        <Typography variant="body1">{carouselSlides.some(o => o.message === item.message) ? 'bỏ ghim' : 'Ghim'}</Typography>
+                                        <Typography variant="body1">{carouselSlides.some(slide => slide.id === item.id) ? 'bỏ ghim' : 'Ghim'}</Typography>
                                     </ListItemText>
                                 </ListItemButton>
                             </ListItem>

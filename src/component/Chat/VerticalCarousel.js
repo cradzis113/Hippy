@@ -116,6 +116,8 @@ const VerticalCarousel = ({ slides }) => {
                             sx={{
                                 width: 180,
                                 overflow: 'hidden',
+                                userSelect: 'none',
+                                textAlign: 'left',
                             }}
                         >
                             <Typography
@@ -124,7 +126,6 @@ const VerticalCarousel = ({ slides }) => {
                                 sx={{
                                     maxWidth: 150,
                                     color: '#2979ff',
-                                    textAlign: 'left',
                                     overflow: 'hidden',
                                     whiteSpace: 'nowrap',
                                     textOverflow: 'ellipsis',
@@ -137,7 +138,6 @@ const VerticalCarousel = ({ slides }) => {
                                 sx={{
                                     maxWidth: 250,
                                     color: 'black',
-                                    textAlign: 'left',
                                     overflow: 'hidden',
                                     whiteSpace: 'nowrap',
                                     textOverflow: 'ellipsis',

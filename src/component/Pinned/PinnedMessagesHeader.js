@@ -12,7 +12,7 @@ const PinnedMessagesHeader = () => {
     const currentChatUserName = currentChatUser?.userName;
     const pinnedMessagesInfo = userData?.data?.user?.pinnedInfo;
     const pinnedMessagesCount = pinnedMessagesInfo?.[currentChatUserName]?.length || carouselSlides.length;
-
+    
     return (
         <AppBar position="static" elevation={1} sx={{ backgroundColor: 'background.paper' }}>
             <Toolbar>

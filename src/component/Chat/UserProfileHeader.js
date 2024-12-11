@@ -34,46 +34,47 @@ const UserProfileHeader = ({ user }) => {
     const { setPinnedViewActive } = useSetting()
 
     const searchInputRef = useRef(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentUserStatus, setCurrentUserStatus] = useState({});
+    const [searchState, setSearchState] = useState({
+        query: '',
+        results: [],
+        isActive: false,
+        isResultsVisible: false
+    });
+    const [currentUserStatus, setCurrentUserStatus] = useState(user);
 
-    const [searchResults, setSearchResults] = useState([]);
-
-    const [isSearchActive, setIsSearchActive] = useState(false);
-    const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
-
-    const [debouncedSearch, loading] = useDebounce((value) => handleSearch(value), 500);
-
-    const handleSearch = (searchTerm) => {
+    const handleSearch = React.useCallback((searchTerm) => {
         if (searchTerm.trim() === '') {
-            return setSearchResults([]);
+            return setSearchState(prev => ({ ...prev, results: [] }));
         }
 
         const currentUser = userData?.data?.user?.userName;
         const messageHistoryForUser = user.messageHistory[currentUser];
-        const filteredMessages = messageHistoryForUser.filter((message) => message.message.includes(searchTerm));
-        setIsSearchResultsVisible(true);
+        const filteredMessages = messageHistoryForUser.filter(
+            message => message.message.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
-        if (filteredMessages.length === 0) {
-            return setSearchResults('empty');
-        }
+        setSearchState(prev => ({
+            ...prev,
+            results: filteredMessages.length === 0 ? 'empty' : filteredMessages,
+            isResultsVisible: true
+        }));
+    }, [user, userData]);
 
-        setSearchResults(filteredMessages);
-    };
+    const [debouncedSearch, loading] = useDebounce(handleSearch, 500);
 
     const handleInputChange = (event) => {
         const value = event.target.value;
-        setSearchQuery(value);
+        setSearchState(prev => ({ ...prev, query: value }));
         debouncedSearch(value);
     };
 
     const handleClose = () => {
-        if (searchQuery) {
-            setSearchQuery('');
-            setSearchResults([]);
-        } else {
-            setIsSearchActive(false);
-        }
+        setSearchState(prev => ({
+            ...prev,
+            query: '',
+            results: [],
+            isActive: prev.query ? true : false
+        }));
     };
 
     const truncateText = (text, maxLength = 20) => {
@@ -84,9 +85,7 @@ const UserProfileHeader = ({ user }) => {
     };
 
     useEffect(() => {
-        if (user) {
-            setCurrentUserStatus(user);
-        }
+        if (!socket?.current || !user) return;
 
         const handleUserStatusUpdate = (data) => {
             if (data.userName === user.userName) {
@@ -94,13 +93,8 @@ const UserProfileHeader = ({ user }) => {
             }
         };
 
-        if (socket) {
-
-            socket.current.on('userStatusUpdated', handleUserStatusUpdate);
-            return () => {
-                socket.current.off('userStatusUpdated', handleUserStatusUpdate);
-            };
-        }
+        socket.current.on('userStatusUpdated', handleUserStatusUpdate);
+        return () => socket.current.off('userStatusUpdated', handleUserStatusUpdate);
     }, [socket, user]);
 
     return (
@@ -112,7 +106,7 @@ const UserProfileHeader = ({ user }) => {
                         alt="User avatar"
                         sx={{ width: 40, height: 40, mr: 2 }}
                     />
-                    {!isSearchActive ? (
+                    {!searchState.isActive ? (
                         <Box>
                             <Typography variant="h6" fontWeight="bold" color="black" lineHeight={1.2}>
                                 {currentUserStatus.userName}
@@ -129,7 +123,7 @@ const UserProfileHeader = ({ user }) => {
                         <ClickAwayListener
                             onClickAway={(event) => {
                                 if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
-                                    setIsSearchResultsVisible(false);
+                                    setSearchState(prev => ({ ...prev, isResultsVisible: false }));
                                 }
                             }}
                         >
@@ -152,9 +146,9 @@ const UserProfileHeader = ({ user }) => {
                                     autoFocus
                                     variant="outlined"
                                     autoComplete="off"
-                                    value={searchQuery}
+                                    value={searchState.query}
                                     onChange={handleInputChange}
-                                    onFocus={() => setIsSearchResultsVisible(true)}
+                                    onFocus={() => setSearchState(prev => ({ ...prev, isResultsVisible: true }))}
                                     sx={{
                                         borderTopLeftRadius: '12px',
                                         borderTopRightRadius: '12px',
@@ -211,7 +205,7 @@ const UserProfileHeader = ({ user }) => {
                                         },
                                     }}
                                 >
-                                    {searchResults === 'empty' && (
+                                    {searchState.results === 'empty' && (
                                         <>
                                             <Divider />
                                             <Typography
@@ -222,15 +216,15 @@ const UserProfileHeader = ({ user }) => {
                                                     my: 0.5,
                                                 }}
                                             >
-                                                There were no results for "{truncateText(searchQuery)}". Try a new search.
+                                                There were no results for "{truncateText(searchState.query)}". Try a new search.
                                             </Typography>
                                         </>
                                     )}
-                                    {searchResults !== 'empty' && searchResults.length > 0 && isSearchResultsVisible && (
+                                    {searchState.results !== 'empty' && searchState.results.length > 0 && searchState.isResultsVisible && (
                                         <>
                                             <Divider />
                                             <List>
-                                                {searchResults.map((message) => (
+                                                {searchState.results.map((message) => (
                                                     <ListItem
                                                         disablePadding
                                                         key={message.id}
@@ -282,7 +276,7 @@ const UserProfileHeader = ({ user }) => {
                         </ClickAwayListener>
                     )}
                 </Box>
-                {!isSearchActive && (
+                {!searchState.isActive && (
                     <>
                         {carouselSlides?.length > 0 && <VerticalCarousel slides={carouselSlides} />}
                         {carouselSlides?.length > 1 && (
@@ -290,7 +284,7 @@ const UserProfileHeader = ({ user }) => {
                                 <PushPinOutlinedIcon />
                             </IconButton>
                         )}
-                        <IconButton onClick={() => setIsSearchActive(true)}>
+                        <IconButton onClick={() => setSearchState(prev => ({ ...prev, isActive: true }))}>
                             <SearchIcon />
                         </IconButton>
                         <IconButton>

@@ -10,7 +10,8 @@ export const DataProvider = ({ children }) => {
     const [messageBackState, setMessageBackState] = useState({})
     const [carouselSlides, setCarouselSlides] = useState([]);
     const [selectedMessages, setSelectedMessages] = useState([]);
-
+    const [focusMessage, setFocusMessage] = useState(null);
+    
     return (
         <DataContext.Provider value={{
             carouselSlides,
@@ -22,7 +23,9 @@ export const DataProvider = ({ children }) => {
             messageBackState,
             setMessageBackState,
             selectedMessages,
-            setSelectedMessages
+            setSelectedMessages,
+            focusMessage,
+            setFocusMessage
         }}>
             {children}
         </DataContext.Provider>

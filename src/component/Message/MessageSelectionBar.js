@@ -17,7 +17,7 @@ import { useSetting } from '../../context/SettingContext';
 import { useData } from '../../context/DataContext';
 
 const MessageSelectionBar = ({
-  selectedCount = 1,
+  selectedCount,
   onForward,
   item,
   currentUser
@@ -51,25 +51,23 @@ const MessageSelectionBar = ({
           currentUser
         };
       } else if (visibilityOption === 'onlyYou') {
-        if (currentUserRevokedMessages.length > 0 && otherUserMessages.length > 0) { 
+        if (currentUserRevokedMessages.length > 0 && otherUserMessages.length > 0) {
           updatedData = {
             currentUserRevokedMessages: { visibilityOption: 'onlyYou', messages: currentUserRevokedMessages },
             otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages },
             currentUser
           }
-          return;
-        } 
-
-
-        updatedData = {
-          ...(otherUserMessages.length > 0 && {
-            otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages }
-          }),
-          ...(currentUserMessages.length > 0 && {
-            currentUserMessages: { visibilityOption: 'onlyYou', messages: currentUserMessages }
-          }),
-          currentUser
-        };
+        } else if (currentUserMessages.length > 0 || otherUserMessages.length > 0) {
+          updatedData = {
+            ...(otherUserMessages.length > 0 && {
+              otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages }
+            }),
+            ...(currentUserMessages.length > 0 && {
+              currentUserMessages: { visibilityOption: 'onlyYou', messages: currentUserMessages }
+            }),
+            currentUser
+          };
+        }
       }
     }
     setSelectedMessages([]);
@@ -79,9 +77,9 @@ const MessageSelectionBar = ({
 
   const handleOpenDialog = () => {
     const currentUserMessages = item.filter(msg => msg.senderUserName === currentUser);
-    const n = currentUserMessages.every(msg => msg.revoked)
+    const allMessagesRevoked = currentUserMessages.every(msg => msg.revoked)
 
-    if (currentUserMessages.length === 0 || n) {
+    if (currentUserMessages.length === 0 || allMessagesRevoked) {
       handleRetrieveMessages(item, 'onlyYou');
     } else {
       setDialogOpen(true);

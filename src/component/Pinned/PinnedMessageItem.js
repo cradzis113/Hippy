@@ -1,9 +1,11 @@
-import { Box, Chip, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Popper, Typography } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { green } from "@mui/material/colors";
 import moment from "moment";
 import { useEffect, useState, useMemo } from "react";
+import ThreeSixtyOutlinedIcon from '@mui/icons-material/ThreeSixtyOutlined';
+import { useSetting } from "../../context/SettingContext";
 
 const groupMessagesByDate = (messages) => {
     const groupedMessages = messages.reduce((acc, msg) => {
@@ -26,7 +28,8 @@ const groupMessagesByDate = (messages) => {
 
 const PinnedMessageItem = () => {
     const { userData } = useAuth();
-    const { currentChatUser, carouselSlides } = useData();
+    const { setPinnedViewActive } = useSetting();
+    const { currentChatUser, carouselSlides, setFocusMessage } = useData();
 
     const pinnedMessages = useMemo(
         () => userData?.data?.user?.pinnedInfo || {},
@@ -36,6 +39,8 @@ const PinnedMessageItem = () => {
     const currentUser = userData?.data?.user?.userName;
 
     const [messages, setMessages] = useState([]);
+    const [hoveredMessageId, setHoveredMessageId] = useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
         if (carouselSlides.length > 0) {
@@ -52,6 +57,11 @@ const PinnedMessageItem = () => {
         '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
         '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
         '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
+    };
+
+    const handleFocusMessage = (message) => {
+        setFocusMessage(message);
+        setPinnedViewActive(false);
     };
 
     return (
@@ -91,6 +101,14 @@ const PinnedMessageItem = () => {
                             }}
                         >
                             <Box
+                                onMouseEnter={(event) => {
+                                    setHoveredMessageId(item.id);
+                                    setAnchorEl(event.currentTarget);
+                                }}
+                                onMouseLeave={() => {
+                                    setHoveredMessageId(null);
+                                    setAnchorEl(null);
+                                }}
                                 sx={{
                                     backgroundColor: item.senderUserName === currentUser ? green[400] : "background.paper",
                                     padding: "6px 12px",
@@ -107,6 +125,16 @@ const PinnedMessageItem = () => {
                                 >
                                     {item.message}
                                 </Typography>
+                                <Popper
+                                    open={hoveredMessageId === item.id}
+                                    anchorEl={anchorEl}
+                                    placement="right"
+                                    disablePortal={true}
+                                >
+                                    <IconButton onClick={() => handleFocusMessage(item)}>
+                                        <ThreeSixtyOutlinedIcon />
+                                    </IconButton>
+                                </Popper>
                             </Box>
                         </Box>
                     ))}

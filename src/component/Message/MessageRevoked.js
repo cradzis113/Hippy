@@ -2,8 +2,11 @@ import { Box, Typography, Popper, IconButton } from '@mui/material';
 import { green } from '@mui/material/colors';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MessageTooltip from './MessageTooltip';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useData } from '../../context/DataContext';
+import { useSetting } from '../../context/SettingContext';
 
-const RevokeMessage = ({
+const MessageRevoked = ({
     item,
     anchorEl,
     formatTime,
@@ -13,6 +16,15 @@ const RevokeMessage = ({
     handlePopoverClose,
     handleRetrieveMessages
 }) => {
+    const { setSelectedMessages } = useData();
+    const { setActiveSelectedMessage } = useSetting();
+
+    const handleSelectMessage = () => {
+        handlePopoverClose();
+        setActiveSelectedMessage(true);
+        setSelectedMessages(prev => [...prev, item]);
+    };
+
     return (
         <Box
             sx={{
@@ -69,9 +81,12 @@ const RevokeMessage = ({
                 <IconButton onClick={() => handleRetrieveMessages(item, 'onlyYou')}>
                     <DeleteIcon />
                 </IconButton>
+                <IconButton onClick={handleSelectMessage}>
+                    <CheckCircleOutlineIcon />
+                </IconButton>
             </Popper>
         </Box>
     );
 };
 
-export default RevokeMessage;
+export default MessageRevoked;

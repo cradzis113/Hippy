@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import { green } from '@mui/material/colors';
-import RevokeMessage from './RevokeMessage';
+import MessageRevoked from './MessageRevoked';
 import MessageContent from './MessageContent';
 import MessageActions from './MessageActions';
 import { useSocket } from '../../context/SocketContext';
@@ -18,7 +18,7 @@ const MessageItem = ({
     const [currentPopoverAnchorEl, setCurrentPopoverAnchorEl] = useState(null);
     const [dotAnchor, setDotAnchor] = useState(null);
     const { activeSelectedMessage } = useSetting();
-    
+
     const handlePopoverOpen = (element, index) => {
         setPopoverAnchorEl(index);
         setCurrentPopoverAnchorEl(element);
@@ -55,7 +55,7 @@ const MessageItem = ({
 
     if (item?.revoked?.revokedBoth) {
         return (
-            <RevokeMessage
+            <MessageRevoked
                 item={item}
                 formatTime={formatTime}
                 currentUser={currentUser}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@mui/material';
+import { Tooltip, Box } from '@mui/material';
 
 const MessageTooltip = ({ title, children }) => {
     return (
@@ -12,7 +12,7 @@ const MessageTooltip = ({ title, children }) => {
                 },
             }}
         >
-            {children}
+            <Box display="inline-block">{children}</Box>
         </Tooltip>
     );
 };

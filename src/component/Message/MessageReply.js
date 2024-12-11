@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 
-const ReplyMessage = ({ replyInfo }) => (
+const MessageReply = ({ replyInfo }) => (
     <>
         <Box
             sx={{
@@ -40,4 +40,4 @@ const ReplyMessage = ({ replyInfo }) => (
     </>
 );
 
-export default ReplyMessage;
+export default MessageReply;

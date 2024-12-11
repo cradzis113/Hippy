@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, memo } from 'react';
 import { Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import { useAuth } from '../../context/AuthContext';
@@ -8,56 +8,180 @@ import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import BadgeAvatars from './BadgeAvatars';
 
+// Utility functions
+const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const [datePart, timePart] = timestamp.split(' ');
+    if (!timePart) return '';
+    const [hours, minutes] = timePart.split(':');
+    return `${hours}:${minutes}`;
+};
+
+const shouldDisplayMessage = (lastMessage, unreadMessageCount) => {
+    if (Object.keys(lastMessage).length > 1) {
+        return !lastMessage.message.includes(`${lastMessage.senderUserName} đã thu hồi một tin nhắn`);
+    }
+    return !(!lastMessage.message.includes(`Bạn đã thu hồi một tin nhắn`) && unreadMessageCount > 0);
+};
+
+// Memoized conversation item component
+const ConversationItem = memo(({
+    userName,
+    lastMessage,
+    unseenMessageCount,
+    currentUserName,
+    newMessage,
+    onClick,
+    messageHistory
+}) => {
+    const renderSeenStatus = () => {
+        if (Object.keys(newMessage).length === 5) {
+            const originIndex = newMessage.listMessage.findIndex(
+                (msg) => msg.id === newMessage.originMessage.id
+            );
+
+            if (newMessage.originMessage.senderUserName !== currentUserName) return null;
+
+            return originIndex < newMessage.listMessage.length ?
+                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} /> :
+                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />;
+        }
+
+        if (lastMessage.senderUserName !== currentUserName) return null;
+
+        const lastMessageIndex = messageHistory.findIndex(
+            (message) => message.id === lastMessage.id
+        );
+
+        if (lastMessageIndex === messageHistory.length - 1) {
+            return lastMessage.seen ?
+                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} /> :
+                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />;
+        }
+
+        return lastMessageIndex < messageHistory.length - 1 ?
+            <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} /> :
+            <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />;
+    };
+
+    return (
+        <ListItem
+            sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                transition: 'background-color 0.3s ease',
+                '&:hover': {
+                    backgroundColor: '#f0f0f0',
+                    cursor: 'pointer',
+                },
+            }}
+            onClick={onClick}
+        >
+            <ListItemAvatar>
+                <BadgeAvatars />
+            </ListItemAvatar>
+            <ListItemText
+                primary={
+                    <Box display="flex" justifyContent="space-between" ml={0.7}>
+                        <Typography
+                            variant="body1"
+                            component="span"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontWeight: 600,
+                            }}
+                        >
+                            {userName}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {renderSeenStatus()}
+                            <Typography
+                                variant="caption"
+                                component="span"
+                                sx={{ color: 'text.secondary', ml: 0.5 }}
+                            >
+                                {formatTime(lastMessage?.time)}
+                            </Typography>
+                        </Box>
+                    </Box>
+                }
+                secondary={
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            ml: 0.7
+                        }}
+                        component={'span'}>
+                        <Typography
+                            variant="body1"
+                            color="text.secondary"
+                            component={'span'}
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: shouldDisplayMessage((newMessage || lastMessage), unseenMessageCount) ? '100%' : '85%'
+                            }}
+                        >
+                            {(newMessage.senderUserName === userName || newMessage.recipientUserName === userName)
+                                ? newMessage.message
+                                : lastMessage.message}
+                        </Typography>
+                        {lastMessage?.senderUserName !== currentUserName &&
+                            <Badge
+                                badgeContent={unseenMessageCount}
+                                color='primary'
+                                sx={{ mr: 1 }}
+                            />
+                        }
+                    </Box>
+                }
+            />
+        </ListItem>
+    );
+});
+
 const ConversationList = () => {
     const socket = useSocket();
     const { userData } = useAuth();
     const { setCurrentChatUser, messageBackState, setCarouselSlides, carouselSlides } = useData();
 
-    const initialMessageHistory = userData?.data?.user?.messageHistory || {};
     const currentUserName = userData?.data?.user?.userName || '';
+    const initialMessageHistory = userData?.data?.user?.messageHistory || {};
+    const pinnedInfo = userData?.data?.user?.pinnedInfo || {};
 
     const [newMessage, setNewMessage] = useState('');
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
+    const [userTarget, setUserTarget] = useState('');
 
-    const [userTarget, setUserTarget] = useState('')
-    const pinnedInfo = userData?.data?.user?.pinnedInfo || {};
     const pinnedMessages = pinnedInfo[userTarget] || [];
 
-    const formatTime = (timestamp) => {
-        if (!timestamp) {
-            return '';
-        }
-
-        const [datePart, timePart] = timestamp.split(' ');
-
-        if (!timePart) {
-            return '';
-        }
-
-        const [hours, minutes] = timePart.split(':');
-        return `${hours}:${minutes}`;
-    };
-
     const handleClick = (userName) => {
-        if (socket) {
-            socket.current.emit('search', userName, (error, results) => {
-                if (error) {
-                    console.error('Search error:', error);
-                } else {
-                    setUserTarget(results[0].userName)
-                    setCurrentChatUser(results[0]);
-                    socket.current.emit('chatEvent', {
-                        recipientUserName: results[0].userName,
-                        recipientSocketId: results[0].socketId,
-                        userName: currentUserName,
-                        socketId: socket.current.id,
-                        type: 'chatRequest'
-                    });
-                }
+        if (!socket) return;
+
+        socket.current.emit('search', userName, (error, results) => {
+            if (error) {
+                console.error('Search error:', error);
+                return;
+            }
+
+            setUserTarget(results[0].userName);
+            setCurrentChatUser(results[0]);
+            socket.current.emit('chatEvent', {
+                recipientUserName: results[0].userName,
+                recipientSocketId: results[0].socketId,
+                userName: currentUserName,
+                socketId: socket.current.id,
+                type: 'chatRequest'
             });
-        }
+        });
     };
 
+    // Message processing logic remains the same
     const processUserMessages = (chatMessageHistory, userName, currentUserName) => {
         const userMessages = chatMessageHistory[userName];
         let lastMessage = userMessages[userMessages.length - 1];
@@ -134,103 +258,39 @@ const ConversationList = () => {
         return { lastMessage, unseenMessageCount };
     };
 
-    const shouldDisplayMessage = (lastMessage, unreadMessageCount) => {
-        if (Object.keys(lastMessage).length > 1) {
-            if (lastMessage.message.includes(`${lastMessage.senderUserName} đã thu hồi một tin nhắn`)) {
-                return false;
-            }
-        } else {
-            if (!lastMessage.message.includes(`Bạn đã thu hồi một tin nhắn`) && unreadMessageCount > 0) {
-                return false;
-            }
-
-            return true;
-        }
-    };
-
-    const renderSeenStatus = (lastMessage, currentUserName, incomingMessage, messageHistory) => {
-        if (Object.keys(incomingMessage).length === 5) {
-            const originIndex = incomingMessage.listMessage.findIndex(
-                (msg) => msg.id === incomingMessage.originMessage.id
-            );
-
-            if (incomingMessage.originMessage.senderUserName !== currentUserName) {
-                return;
-            }
-
-            if (originIndex < incomingMessage.listMessage.length) {
-                return <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />;
-            } else {
-                return <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />;
-            }
-        }
-
-        if (lastMessage.senderUserName !== currentUserName) {
-            return null;
-        }
-
-        const lastMessageIndex = messageHistory.findIndex(
-            (message) => message.id === lastMessage.id
-        );
-
-        if (lastMessageIndex === messageHistory.length - 1) {
-            return lastMessage.seen ? (
-                <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
-            ) : (
-                <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
-            );
-        }
-
-        return lastMessageIndex < messageHistory.length - 1 ? (
-            <DoneAllIcon sx={{ fontSize: 14, mb: 0.3 }} />
-        ) : (
-            <DoneIcon sx={{ fontSize: 14, mb: 0.3 }} />
-        );
-    };
-
+    // Socket effect
     useEffect(() => {
         if (!socket.current || !userData?.data?.user) return;
 
-        const notificationData = (data) => {
-            setNewMessage(data);
-        };
-
-        const messageHistory = (data) => {
-            setChatMessageHistory(data);
-        };
-
-        const readMessages = (data) => {
-            setChatMessageHistory(data.messageHistory);
-        };
-
-        const handleUserData = (userData) => {
-            setChatMessageHistory(userData.messageHistory);
-        };
-
-        const handleCarouselDataUpdate = (carouselData) => {
-            setCarouselSlides(carouselData);
+        const handlers = {
+            notification: setNewMessage,
+            messageHistoryUpdate: setChatMessageHistory,
+            readMessages: (data) => setChatMessageHistory(data.messageHistory),
+            receiveUserData: (userData) => setChatMessageHistory(userData.messageHistory),
+            carouselDataUpdate: setCarouselSlides
         };
 
         socket.current.emit('getUserData', currentUserName);
-        socket.current.on('connect', () => {
-            socket.current.emit('chatEvent', { socketId: socket.current.id, userName: userData.data.user.userName, type: 'register' });
+        socket.current.emit('chatEvent', {
+            socketId: socket.current.id,
+            userName: currentUserName,
+            type: 'register'
         });
 
-        socket.current.on('notification', notificationData);
-        socket.current.on('readMessages', readMessages);
-        socket.current.on('receiveUserData', handleUserData)
-        socket.current.on('messageHistoryUpdate', messageHistory);
-        socket.current.on('carouselDataUpdate', handleCarouselDataUpdate);
+        // Register handlers
+        Object.entries(handlers).forEach(([event, handler]) => {
+            socket.current.on(event, handler);
+        });
 
+        // Cleanup
         return () => {
-            socket.current.off('readMessages', readMessages);
-            socket.current.off('notification', notificationData);
-            socket.current.off('receiveUserData', handleUserData);
-            socket.current.off('messageHistoryUpdate', messageHistory);
-            socket.current.off('carouselDataUpdate', handleCarouselDataUpdate);
+            Object.keys(handlers).forEach(event => {
+                socket.current.off(event);
+            });
         };
     }, [socket.current]);
 
+    // Other effects remain the same
     useEffect(() => {
         if (Object.keys(messageBackState).length > 0) {
             setChatMessageHistory(messageBackState);
@@ -238,10 +298,18 @@ const ConversationList = () => {
     }, [messageBackState]);
 
     useEffect(() => {
-        if (carouselSlides.length < 1) {
-            setCarouselSlides(pinnedMessages)
+        if (carouselSlides.length < 1 && pinnedMessages.length > 0) {
+            setCarouselSlides(pinnedMessages);
         }
-    }, [carouselSlides]);
+    }, [userTarget]);
+
+    // Memoize processed messages
+    const processedMessages = useMemo(() => {
+        return Object.keys(chatMessageHistory).map(userName => ({
+            userName,
+            ...processUserMessages(chatMessageHistory, userName, currentUserName)
+        }));
+    }, [chatMessageHistory, currentUserName]);
 
     return (
         <Box
@@ -265,89 +333,20 @@ const ConversationList = () => {
             }}
         >
             <List>
-                {chatMessageHistory && Object.keys(chatMessageHistory).map((userName, index) => {
-                    const { lastMessage, unseenMessageCount } = processUserMessages(chatMessageHistory, userName, currentUserName);
-
-                    return (
-                        <ListItem
-                            key={index}
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                transition: 'background-color 0.3s ease',
-                                '&:hover': {
-                                    backgroundColor: '#f0f0f0',
-                                    cursor: 'pointer',
-                                },
-                            }}
-                            onClick={() => handleClick(userName)}
-                        >
-                            <ListItemAvatar>
-                                <BadgeAvatars />
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={
-                                    <Box display="flex" justifyContent="space-between" ml={0.7}>
-                                        <Typography
-                                            variant="body1"
-                                            component="span"
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            {userName}
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {renderSeenStatus(lastMessage, currentUserName, newMessage, chatMessageHistory[userName])}
-                                            <Typography
-                                                variant="caption"
-                                                component="span"
-                                                sx={{ color: 'text.secondary', ml: 0.5 }}
-                                            >
-                                                {formatTime(lastMessage?.time)}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                }
-                                secondary={
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            ml: 0.7
-                                        }}
-                                        component={'span'}>
-                                        <Typography
-                                            variant="body1"
-                                            color="text.secondary"
-                                            component={'span'}
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                maxWidth: shouldDisplayMessage((newMessage || lastMessage), unseenMessageCount) ? '100%' : '85%'
-                                            }}
-                                        >
-                                            {newMessage.senderUserName === userName || newMessage.recipientUserName === userName ? newMessage.message : lastMessage.message}
-                                        </Typography>
-                                        {lastMessage?.senderUserName !== currentUserName &&
-                                            <Badge
-                                                badgeContent={unseenMessageCount}
-                                                color='primary' sx={{ mr: 1 }}
-                                            />
-                                        }
-                                    </Box>
-                                }
-                            />
-                        </ListItem>
-                    );
-                })}
+                {processedMessages.map(({ userName, lastMessage, unseenMessageCount }) => (
+                    <ConversationItem
+                        key={userName}
+                        userName={userName}
+                        lastMessage={lastMessage}
+                        unseenMessageCount={unseenMessageCount}
+                        currentUserName={currentUserName}
+                        newMessage={newMessage}
+                        onClick={() => handleClick(userName)}
+                        messageHistory={chatMessageHistory[userName]}
+                    />
+                ))}
             </List>
-        </Box >
+        </Box>
     );
 };
 

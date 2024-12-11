@@ -5,15 +5,15 @@ import { useSetting } from '../../context/SettingContext';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
 
-const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Apps', 'Media'];
+const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Channels', 'Apps', 'Media'];
 
 const RecentConversations = forwardRef((props, ref) => {
     const containerRef = useRef(null);
     const [value, setValue] = useState(0);
 
-    const socket = useSocket()
-    const { userData } = useAuth()
-    const { setBackState } = useSetting()
+    const socket = useSocket();
+    const { userData } = useAuth();
+    const { setBackState } = useSetting();
     const { searchResult, setCurrentChatUser, setMessageBackState } = useData();
 
     const isDesktop = useMediaQuery('(min-width: 926px)');
@@ -26,32 +26,45 @@ const RecentConversations = forwardRef((props, ref) => {
         setBackState(false);
         setCurrentChatUser(user);
 
-        const userName = userData.data.user.userName
-        if (socket) {
-            socket.current.emit('chatEvent',
-                { recipientUserName: user.userName, recipientSocketId: user.socketId, userName: userName, socketId: socket.current.id, type: 'chatRequest' }
-            );
+        if (socket?.current) {
+            const chatEventData = {
+                recipientUserName: user.userName,
+                recipientSocketId: user.socketId,
+                userName: userData.data.user.userName,
+                socketId: socket.current.id,
+                type: 'chatRequest'
+            };
+            socket.current.emit('chatEvent', chatEventData);
         }
-    }
+    };
 
-    const handleWheel = (event) => {
+    const handleWheel = React.useCallback((event) => {
         if (containerRef.current) {
             const scrollSpeed = 0.5;
             containerRef.current.scrollLeft += event.deltaY * scrollSpeed;
         }
-    };
+    }, []);
 
     useEffect(() => {
-        if (socket.current) {
-            socket.current.on('messageBackState', (message) => {
-                setMessageBackState(message)
-            });
-
-            return () => {
-                socket.current.off('messageBackState');
-            };
+        const currentSocket = socket.current;
+        if (currentSocket) {
+            currentSocket.on('messageBackState', setMessageBackState);
+            return () => currentSocket.off('messageBackState');
         }
-    }, [socket.current]);
+    }, [socket.current, setMessageBackState]);
+
+    const UserAvatar = ({ user }) => (
+        <Avatar
+            src={user.image}
+            sx={{
+                width: 56,
+                height: 56,
+                backgroundColor: !user.image ? 'pink' : 'transparent',
+            }}
+        >
+            {!user.image && user.userName[0]}
+        </Avatar>
+    );
 
     return (
         <Box sx={{ width: '100%', bgcolor: 'background.paper' }} {...props} ref={ref}>
@@ -106,16 +119,7 @@ const RecentConversations = forwardRef((props, ref) => {
                         }}
                         onClick={() => handleClick(user)}
                     >
-                        <Avatar
-                            src={user.image}
-                            sx={{
-                                width: 56,
-                                height: 56,
-                                backgroundColor: !user.image ? 'pink' : 'transparent',
-                            }}
-                        >
-                            {!user.image && user.userName[0]}
-                        </Avatar>
+                        <UserAvatar user={user} />
                         <Typography
                             variant="caption"
                             sx={{
@@ -137,4 +141,4 @@ const RecentConversations = forwardRef((props, ref) => {
     );
 });
 
-export default RecentConversations;
+export default React.memo(RecentConversations);

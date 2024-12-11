@@ -1,20 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import MessageItem from './MessageItem';
 import MessageInput from './MessageInput';
 
 import { useAuth } from '../../context/AuthContext';
-import useSendMessage from '../../hook/UseSendMessage';
 import { useSocket } from '../../context/SocketContext';
+import { useData } from '../../context/DataContext';
+import { useSetting } from '../../context/SettingContext';
 
 import moment from 'moment';
-import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography, Checkbox } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import LazyLoad from 'react-lazyload';
+
 import MessageDeletionNotification from './MessageDeletionNotification';
+import useSendMessage from '../../hook/UseSendMessage';
+import MessageSelectionBar from './MessageSelectionBar';
+
+import CloseIcon from '@mui/icons-material/Close';
 import ReplyIcon from '@mui/icons-material/Reply';
 import { RadioButtonUnchecked, RadioButtonChecked } from '@mui/icons-material';
-import { useSetting } from '../../context/SettingContext';
-import MessageSelectionBar from './MessageSelectionBar';
-import { useData } from '../../context/DataContext';
+import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography, Checkbox } from '@mui/material';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();
@@ -32,10 +35,22 @@ const MessageList = ({ user }) => {
 
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const { activeSelectedMessage } = useSetting();
-    const { selectedMessages, setSelectedMessages } = useData();
+    const { selectedMessages, setSelectedMessages, focusMessage } = useData();
+
+    const messagesEndRef = useRef(null);
+    const [isExpanding, setIsExpanding] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     useEffect(() => {
         const messageHistory = user?.messageHistory;
@@ -107,6 +122,26 @@ const MessageList = ({ user }) => {
         };
     }, [socket]);
 
+    useEffect(() => {
+        if (focusMessage) {
+            setHighlightedMessageId(focusMessage.id);
+            setIsExpanding(true);
+
+            const shrinkTimer = setTimeout(() => {
+                setIsExpanding(false);
+            }, 2000);
+
+            const clearTimer = setTimeout(() => {
+                setHighlightedMessageId(null);
+            }, 2300);
+
+            return () => {
+                clearTimeout(shrinkTimer);
+                clearTimeout(clearTimer);
+            };
+        }
+    }, [focusMessage]);
+
     const handleSendMessage = () => {
         if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
     };
@@ -139,79 +174,136 @@ const MessageList = ({ user }) => {
                 sx={{
                     mt: 2,
                     flexGrow: 1,
+                    display: 'flex',
                     overflowY: 'auto',
                     position: 'relative',
+                    flexDirection: 'column-reverse',
                     '&::-webkit-scrollbar': { width: '5px' },
                     '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
                     '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                {hasVisibleMessageInFirstGroup && !recentVisibleMessage && (
-                    <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
-                        <MessageDeletionNotification />
-                    </Box>
-                )}
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    {hasVisibleMessageInFirstGroup && !recentVisibleMessage && (
+                        <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
+                            <MessageDeletionNotification />
+                        </Box>
+                    )}
 
-                {(!hasVisibleMessageInFirstGroup || recentVisibleMessage) && messages.map((dayGroup, index) => {
-                    const hasVisibleMessageInDayGroup = dayGroup.messages.some(
-                        message => !message?.revoked?.revokedBy?.includes(currentUser)
-                    );
+                    {(!hasVisibleMessageInFirstGroup || recentVisibleMessage) && messages.map((dayGroup, index) => {
+                        const hasVisibleMessageInDayGroup = dayGroup.messages.some(
+                            message => !message?.revoked?.revokedBy?.includes(currentUser)
+                        );
 
-                    return (
-                        <React.Fragment key={index}>
-                            {hasVisibleMessageInDayGroup && (
-                                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
-                                    <Chip label={moment(dayGroup.time).format('MMMM D')} sx={{ bgcolor: '#a5d6a7', color: 'background.paper' }} />
-                                </Box>
-                            )}
-                            {dayGroup.messages.map((item, msgIndex) => (
-                                <React.Fragment key={msgIndex}>
-                                    {!item?.revoked?.revokedBy?.includes(currentUser) && (
-                                        <Box
-                                            sx={{
-                                                width: 650,
-                                                padding: 1,
-                                                display: 'flex',
-                                                margin: '0 auto',
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            {activeSelectedMessage && (
-                                                <Checkbox
-                                                    size="small"
-                                                    checked={selectedMessages.some(msg => msg.id === item.id)}
-                                                    onChange={(e) => handleRadioChange(e, item)}
-                                                    icon={<RadioButtonUnchecked />}
-                                                    checkedIcon={<RadioButtonChecked />}
+                        return (
+                            <React.Fragment key={index}>
+                                {hasVisibleMessageInDayGroup && (
+                                    <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                                        <Chip label={moment(dayGroup.time).format('MMMM D')} sx={{ bgcolor: '#a5d6a7', color: 'background.paper' }} />
+                                    </Box>
+                                )}
+                                {dayGroup.messages.map((item, msgIndex) => (
+                                    // <LazyLoad key={msgIndex} height={200} offset={100}>
+                                        <React.Fragment key={msgIndex}>
+                                            {!item?.revoked?.revokedBy?.includes(currentUser) && (
+                                                <Box
                                                     sx={{
-                                                        marginRight: 1,
-                                                        '& .MuiSvgIcon-root': {
-                                                            fontSize: 20
+                                                        width: '100%',
+                                                        margin: '0 auto',
+                                                        position: 'relative',
+                                                        overflow: 'hidden',
+                                                        '@keyframes expandFromCenter': {
+                                                            '0%': {
+                                                                width: '0%',
+                                                            },
+                                                            '100%': {
+                                                                width: '40%',
+                                                            }
+                                                        },
+                                                        '@keyframes shrinkToCenter': {
+                                                            '0%': {
+                                                                width: '40%',
+                                                            },
+                                                            '100%': {
+                                                                width: '0%',
+                                                            }
+                                                        },
+                                                        '&::before, &::after': {
+                                                            content: '""',
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            height: '100%',
+                                                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                                                            width: '0%',
+                                                        },
+                                                        '&::before': {
+                                                            right: '50%',
+                                                            borderTopLeftRadius: '10px',
+                                                            borderBottomLeftRadius: '10px',
+                                                            animation: highlightedMessageId === item.id ?
+                                                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                                                : 'none',
+                                                        },
+                                                        '&::after': {
+                                                            left: '50%',
+                                                            borderTopRightRadius: '10px',
+                                                            borderBottomRightRadius: '10px',
+                                                            animation: highlightedMessageId === item.id ?
+                                                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                                                : 'none',
                                                         }
                                                     }}
-                                                />
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            width: 650,
+                                                            padding: 1,
+                                                            display: 'flex',
+                                                            margin: '0 auto',
+                                                            flexDirection: 'row',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        {activeSelectedMessage && (
+                                                            <Checkbox
+                                                                size="small"
+                                                                checked={selectedMessages.some(msg => msg.id === item.id)}
+                                                                onChange={(e) => handleRadioChange(e, item)}
+                                                                icon={<RadioButtonUnchecked />}
+                                                                checkedIcon={<RadioButtonChecked />}
+                                                                sx={{
+                                                                    marginRight: 1,
+                                                                    '& .MuiSvgIcon-root': {
+                                                                        fontSize: 20
+                                                                    }
+                                                                }}
+                                                            />
+                                                        )}
+                                                        <Box sx={{
+                                                            flex: 1,
+                                                            display: 'flex',
+                                                            justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
+                                                            borderRadius: '10px'
+                                                        }}>
+                                                            <MessageItem
+                                                                item={item}
+                                                                currentUser={currentUser}
+                                                                setUserReplied={setUserReplied}
+                                                                setMessageReplied={setMessageReplied}
+                                                            />
+                                                        </Box>
+                                                    </Box>
+                                                </Box>
                                             )}
-                                            <Box sx={{
-                                                flex: 1,
-                                                display: 'flex',
-                                                justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start'
-                                            }}>
-                                                <MessageItem
-                                                    item={item}
-                                                    currentUser={currentUser}
-                                                    setUserReplied={setUserReplied}
-                                                    setMessageReplied={setMessageReplied}
-                                                />
-                                            </Box>
-                                        </Box>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </React.Fragment>
-                    );
-                })}
+                                        </React.Fragment>
+                                    // </LazyLoad>
+                                ))}
+                            </React.Fragment>
+                        );
+                    })}
+                    <Box ref={messagesEndRef} />
+                </Box>
             </Box>
             <Box
                 sx={{

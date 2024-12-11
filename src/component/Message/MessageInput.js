@@ -9,6 +9,42 @@ import useEmojiPicker from '../../hook/useEmojiPicker';
 const MessageInput = ({ message, setMessage, handleSendMessage, showEmojiPicker, setShowEmojiPicker }) => {
     const { emojiPickerRef, handleEmojiClick } = useEmojiPicker();
 
+    const commonIconButtonStyles = {
+        padding: 2,
+        backgroundColor: 'transparent',
+        '&:hover': {
+            backgroundColor: 'lightblue',
+            '& .MuiSvgIcon-root': {
+                color: 'white',
+            },
+        },
+    };
+
+    const textFieldStyles = {
+        '& .MuiOutlinedInput-root': {
+            bgcolor: 'white',
+            borderRadius: '16px',
+            '& fieldset': {
+                borderColor: 'transparent',
+            },
+            '&:hover fieldset': {
+                borderColor: 'transparent',
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: 'transparent',
+            },
+        },
+    };
+
+    const ActionButton = () => (
+        <IconButton
+            onClick={message ? handleSendMessage : undefined}
+            sx={commonIconButtonStyles}
+        >
+            {message ? <SendIcon /> : <MicIcon />}
+        </IconButton>
+    );
+
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', borderRadius: '16px' }}>
             <TextField
@@ -36,21 +72,7 @@ const MessageInput = ({ message, setMessage, handleSendMessage, showEmojiPicker,
                         ),
                     },
                 }}
-                sx={{
-                    '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
-                        borderRadius: '16px',
-                        '& fieldset': {
-                            borderColor: 'transparent',
-                        },
-                        '&:hover fieldset': {
-                            borderColor: 'transparent',
-                        },
-                        '&.Mui-focused fieldset': {
-                            borderColor: 'transparent',
-                        },
-                    },
-                }}
+                sx={textFieldStyles}
             />
             <Box
                 sx={{
@@ -64,38 +86,7 @@ const MessageInput = ({ message, setMessage, handleSendMessage, showEmojiPicker,
                     backgroundColor: 'white',
                 }}
             >
-                {message ? (
-                    <IconButton
-                        onClick={handleSendMessage}
-                        sx={{
-                            padding: 2,
-                            backgroundColor: 'transparent',
-                            '&:hover': {
-                                backgroundColor: 'lightblue',
-                                '& .MuiSvgIcon-root': {
-                                    color: 'white',
-                                },
-                            },
-                        }}
-                    >
-                        <SendIcon />
-                    </IconButton>
-                ) : (
-                    <IconButton
-                        sx={{
-                            padding: 2,
-                            backgroundColor: 'transparent',
-                            '&:hover': {
-                                backgroundColor: 'lightblue',
-                                '& .MuiSvgIcon-root': {
-                                    color: 'white',
-                                },
-                            },
-                        }}
-                    >
-                        <MicIcon />
-                    </IconButton>
-                )}
+                <ActionButton />
             </Box>
             {showEmojiPicker && (
                 <Box ref={emojiPickerRef} sx={{ position: 'absolute', bottom: '100%', left: 0, my: 2 }}>
