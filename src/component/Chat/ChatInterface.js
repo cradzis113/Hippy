@@ -13,7 +13,7 @@ import UserProfileHeader from './UserProfileHeader';
 const ChatInterface = () => {
     const { backState } = useSetting();
     const { currentChatUser } = useData();
-    const { pinnedViewActive } = useSetting()
+    const { pinnedViewActive } = useSetting();
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>

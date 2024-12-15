@@ -26,7 +26,6 @@ export const AuthProvider = ({ children }) => {
     const fetchData = async () => {
       try {
         const response = await fetchAPI('http://localhost:3001/api/getuserdata', 'GET', null, null, true);
-
         if (response.status === 200) {
           setUserData(response);
           setIsAuthenticated(true);

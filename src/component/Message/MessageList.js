@@ -8,7 +8,6 @@ import { useData } from '../../context/DataContext';
 import { useSetting } from '../../context/SettingContext';
 
 import moment from 'moment';
-import LazyLoad from 'react-lazyload';
 
 import MessageDeletionNotification from './MessageDeletionNotification';
 import useSendMessage from '../../hook/UseSendMessage';
@@ -84,14 +83,16 @@ const MessageList = ({ user }) => {
 
     useEffect(() => {
         if (!socket) return;
-
         const handleMessageSent = (data) => {
             if (!data) {
                 return setMessages([]);
             }
 
+            const messageHistory = user?.messageHistory[currentUser]
+            const newMessageList = [...messageHistory, data];
+
             const groupedMessages = {};
-            data.forEach((msg) => {
+            newMessageList.forEach((msg) => {
                 const dateKey = moment(msg.time).format('YYYY-MM-DD');
 
                 if (!groupedMessages[dateKey]) {
@@ -184,7 +185,11 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
             >
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: hasVisibleMessageInFirstGroup && !recentVisibleMessage ? '100%' : 'auto'
+                }}>
                     {hasVisibleMessageInFirstGroup && !recentVisibleMessage && (
                         <Box sx={{ position: 'relative', top: '50%', transform: 'translateY(-50%)' }}>
                             <MessageDeletionNotification />
@@ -204,100 +209,97 @@ const MessageList = ({ user }) => {
                                     </Box>
                                 )}
                                 {dayGroup.messages.map((item, msgIndex) => (
-                                    // <LazyLoad key={msgIndex} height={200} offset={100}>
-                                        <React.Fragment key={msgIndex}>
-                                            {!item?.revoked?.revokedBy?.includes(currentUser) && (
-                                                <Box
-                                                    sx={{
-                                                        width: '100%',
-                                                        margin: '0 auto',
-                                                        position: 'relative',
-                                                        overflow: 'hidden',
-                                                        '@keyframes expandFromCenter': {
-                                                            '0%': {
-                                                                width: '0%',
-                                                            },
-                                                            '100%': {
-                                                                width: '40%',
-                                                            }
-                                                        },
-                                                        '@keyframes shrinkToCenter': {
-                                                            '0%': {
-                                                                width: '40%',
-                                                            },
-                                                            '100%': {
-                                                                width: '0%',
-                                                            }
-                                                        },
-                                                        '&::before, &::after': {
-                                                            content: '""',
-                                                            position: 'absolute',
-                                                            top: 0,
-                                                            height: '100%',
-                                                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                                    <React.Fragment key={msgIndex}>
+                                        {!item?.revoked?.revokedBy?.includes(currentUser) && (
+                                            <Box
+                                                sx={{
+                                                    width: '100%',
+                                                    margin: '0 auto',
+                                                    position: 'relative',
+                                                    overflow: 'hidden',
+                                                    '@keyframes expandFromCenter': {
+                                                        '0%': {
                                                             width: '0%',
                                                         },
-                                                        '&::before': {
-                                                            right: '50%',
-                                                            borderTopLeftRadius: '10px',
-                                                            borderBottomLeftRadius: '10px',
-                                                            animation: highlightedMessageId === item.id ?
-                                                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
-                                                                : 'none',
-                                                        },
-                                                        '&::after': {
-                                                            left: '50%',
-                                                            borderTopRightRadius: '10px',
-                                                            borderBottomRightRadius: '10px',
-                                                            animation: highlightedMessageId === item.id ?
-                                                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
-                                                                : 'none',
+                                                        '100%': {
+                                                            width: '40%',
                                                         }
+                                                    },
+                                                    '@keyframes shrinkToCenter': {
+                                                        '0%': {
+                                                            width: '40%',
+                                                        },
+                                                        '100%': {
+                                                            width: '0%',
+                                                        }
+                                                    },
+                                                    '&::before, &::after': {
+                                                        content: '""',
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        height: '100%',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                                                        width: '0%',
+                                                    },
+                                                    '&::before': {
+                                                        right: '50%',
+                                                        borderTopLeftRadius: '10px',
+                                                        borderBottomLeftRadius: '10px',
+                                                        animation: highlightedMessageId === item.id ?
+                                                            (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                                            : 'none',
+                                                    },
+                                                    '&::after': {
+                                                        left: '50%',
+                                                        borderTopRightRadius: '10px',
+                                                        borderBottomRightRadius: '10px',
+                                                        animation: highlightedMessageId === item.id ?
+                                                            (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                                            : 'none',
+                                                    }
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        width: item.senderUserName === currentUser ? 620 : 650, padding: 1,
+                                                        display: 'flex',
+                                                        margin: '0 auto',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
                                                     }}
                                                 >
-                                                    <Box
-                                                        sx={{
-                                                            width: 650,
-                                                            padding: 1,
-                                                            display: 'flex',
-                                                            margin: '0 auto',
-                                                            flexDirection: 'row',
-                                                            alignItems: 'center',
-                                                        }}
-                                                    >
-                                                        {activeSelectedMessage && (
-                                                            <Checkbox
-                                                                size="small"
-                                                                checked={selectedMessages.some(msg => msg.id === item.id)}
-                                                                onChange={(e) => handleRadioChange(e, item)}
-                                                                icon={<RadioButtonUnchecked />}
-                                                                checkedIcon={<RadioButtonChecked />}
-                                                                sx={{
-                                                                    marginRight: 1,
-                                                                    '& .MuiSvgIcon-root': {
-                                                                        fontSize: 20
-                                                                    }
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <Box sx={{
-                                                            flex: 1,
-                                                            display: 'flex',
-                                                            justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
-                                                            borderRadius: '10px'
-                                                        }}>
-                                                            <MessageItem
-                                                                item={item}
-                                                                currentUser={currentUser}
-                                                                setUserReplied={setUserReplied}
-                                                                setMessageReplied={setMessageReplied}
-                                                            />
-                                                        </Box>
+                                                    {activeSelectedMessage && (
+                                                        <Checkbox
+                                                            size="small"
+                                                            checked={selectedMessages.some(msg => msg.id === item.id)}
+                                                            onChange={(e) => handleRadioChange(e, item)}
+                                                            icon={<RadioButtonUnchecked />}
+                                                            checkedIcon={<RadioButtonChecked />}
+                                                            sx={{
+                                                                marginRight: 1,
+                                                                '& .MuiSvgIcon-root': {
+                                                                    fontSize: 20
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <Box sx={{
+                                                        flex: 1,
+                                                        display: 'flex',
+                                                        justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
+                                                        borderRadius: '10px'
+                                                    }}>
+                                                        <MessageItem
+                                                            item={item}
+                                                            currentUser={currentUser}
+                                                            setUserReplied={setUserReplied}
+                                                            setMessageReplied={setMessageReplied}
+                                                        />
                                                     </Box>
                                                 </Box>
-                                            )}
-                                        </React.Fragment>
-                                    // </LazyLoad>
+                                            </Box>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </React.Fragment>
                         );

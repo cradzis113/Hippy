@@ -169,11 +169,11 @@ const ConversationList = () => {
                 return;
             }
 
-            setUserTarget(results[0].userName);
-            setCurrentChatUser(results[0]);
+            setUserTarget(results.userName);
+            setCurrentChatUser(results);
             socket.current.emit('chatEvent', {
-                recipientUserName: results[0].userName,
-                recipientSocketId: results[0].socketId,
+                recipientUserName: results.userName,
+                recipientSocketId: results.socketId,
                 userName: currentUserName,
                 socketId: socket.current.id,
                 type: 'chatRequest'
