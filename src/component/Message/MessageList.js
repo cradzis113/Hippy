@@ -34,6 +34,8 @@ const MessageList = ({ user }) => {
 
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
+    const [currentUserMessageHistory, setCurrentUserMessageHistory] = useState(user?.messageHistory?.[currentUser] || []);
+    const currentUserMessageHistoryLength = useRef(currentUserMessageHistory.length);
 
     const { activeSelectedMessage } = useSetting();
     const { selectedMessages, setSelectedMessages, focusMessage } = useData();
@@ -82,46 +84,49 @@ const MessageList = ({ user }) => {
     }, [user, currentUser]);
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket.current) return;
         const handleMessageSent = (data) => {
             if (!data) {
                 return setMessages([]);
             }
 
-            const messageHistory = user?.messageHistory[currentUser]
-            const newMessageList = [...messageHistory, data];
-
-            const groupedMessages = {};
-            newMessageList.forEach((msg) => {
-                const dateKey = moment(msg.time).format('YYYY-MM-DD');
-
-                if (!groupedMessages[dateKey]) {
-                    groupedMessages[dateKey] = {
-                        earliestTime: msg.time,
-                        messages: [],
-                    };
-                }
-
-                if (msg.time < groupedMessages[dateKey].earliestTime) {
-                    groupedMessages[dateKey].earliestTime = msg.time;
-                }
-
-                groupedMessages[dateKey].messages.push(msg);
-            });
-
-            const formattedMessages = Object.keys(groupedMessages).map(date => ({
-                time: groupedMessages[date].earliestTime,
-                messages: groupedMessages[date].messages,
-            }));
-
-            setMessages(formattedMessages);
+            setCurrentUserMessageHistory(prev => [...prev, data])
         };
 
         socket.current.on('messageSent', handleMessageSent);
         return () => {
             socket.current.off('messageSent', handleMessageSent);
         };
-    }, [socket]);
+    }, [socket.current]);
+
+    useEffect(() => {
+        if (currentUserMessageHistory.length === currentUserMessageHistoryLength) return;
+
+        const groupedMessages = {};
+        currentUserMessageHistory.forEach((msg) => {
+            const dateKey = moment(msg.time).format('YYYY-MM-DD');
+
+            if (!groupedMessages[dateKey]) {
+                groupedMessages[dateKey] = {
+                    earliestTime: msg.time,
+                    messages: [],
+                };
+            }
+
+            if (msg.time < groupedMessages[dateKey].earliestTime) {
+                groupedMessages[dateKey].earliestTime = msg.time;
+            }
+
+            groupedMessages[dateKey].messages.push(msg);
+        });
+
+        const formattedMessages = Object.keys(groupedMessages).map(date => ({
+            time: groupedMessages[date].earliestTime,
+            messages: groupedMessages[date].messages,
+        }));
+        
+        setMessages(formattedMessages);
+    }, [currentUserMessageHistoryLength, currentUserMessageHistory])
 
     useEffect(() => {
         if (focusMessage) {

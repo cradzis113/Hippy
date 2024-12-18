@@ -169,11 +169,11 @@ const ConversationList = () => {
                 return;
             }
 
-            setUserTarget(results.userName);
-            setCurrentChatUser(results);
+            setUserTarget(results[0].userName);
+            setCurrentChatUser(results[0]);
             socket.current.emit('chatEvent', {
-                recipientUserName: results.userName,
-                recipientSocketId: results.socketId,
+                recipientUserName: results[0].userName,
+                recipientSocketId: results[0].socketId,
                 userName: currentUserName,
                 socketId: socket.current.id,
                 type: 'chatRequest'
@@ -261,20 +261,39 @@ const ConversationList = () => {
     // Socket effect
     useEffect(() => {
         if (!socket.current || !userData?.data?.user) return;
-
         const handlers = {
             notification: setNewMessage,
-            messageHistoryUpdate: setChatMessageHistory,
-            readMessages: (data) => setChatMessageHistory(data.messageHistory),
-            receiveUserData: (userData) => setChatMessageHistory(userData.messageHistory),
+            messageHistoryUpdate: (updatedMessages, targetUser) => {
+                setChatMessageHistory(prevHistory => ({
+                    ...prevHistory,
+                    [targetUser]: [...prevHistory[targetUser], updatedMessages]
+                }))
+            },
+            readMessages: (updatedMessages, targetUser) => {
+                const messageExists = chatMessageHistory[targetUser].some(i => i.id === updatedMessages.id);
+
+                if (!messageExists) {
+                    const cleanMessages = chatMessageHistory[targetUser].map(message => {
+                        const { seen, ...rest } = message;
+                        return rest;
+                    });
+                    setChatMessageHistory(prevHistory => ({
+                        ...prevHistory,
+                        [targetUser]: [...cleanMessages, updatedMessages]
+                    }));
+                }
+            },
+            // receiveUserData: (userData) => setChatMessageHistory(userData.messageHistory),
             carouselDataUpdate: setCarouselSlides
         };
 
-        socket.current.emit('getUserData', currentUserName);
-        socket.current.emit('chatEvent', {
-            socketId: socket.current.id,
-            userName: currentUserName,
-            type: 'register'
+        socket.current.on("connect", () => {
+            socket.current.emit('getUserData', currentUserName);
+            socket.current.emit('chatEvent', {
+                socketId: socket.current.id,
+                userName: currentUserName,
+                type: 'register'
+            });
         });
 
         // Register handlers
@@ -290,10 +309,23 @@ const ConversationList = () => {
         };
     }, [socket.current]);
 
-    // Other effects remain the same
     useEffect(() => {
-        if (Object.keys(messageBackState).length > 0) {
-            setChatMessageHistory(messageBackState);
+        console.log(chatMessageHistory)
+    }, [chatMessageHistory])
+
+    useEffect(() => {
+        const user = messageBackState.user
+        if (messageBackState.messages.length > 0 && user) {
+            setChatMessageHistory(prevHistory => {
+                console.log(chatMessageHistory)
+                console.log(messageBackState.messages)
+
+                const x = ({
+                    ...chatMessageHistory,
+                    [user]: [...chatMessageHistory[user], ...messageBackState.messages]
+                })
+                setChatMessageHistory(x)
+            })
         }
     }, [messageBackState]);
 
@@ -305,6 +337,7 @@ const ConversationList = () => {
 
     // Memoize processed messages
     const processedMessages = useMemo(() => {
+        if (!chatMessageHistory) return [];
         return Object.keys(chatMessageHistory).map(userName => ({
             userName,
             ...processUserMessages(chatMessageHistory, userName, currentUserName)

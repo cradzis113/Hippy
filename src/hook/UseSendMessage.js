@@ -30,7 +30,7 @@ const useSendMessage = () => {
         setUserReplied('')
         setMessageReplied('')
 
-        socket.current.emit('privateChat', newMessage);
+        socket.current.emit('privateChat', newMessage );
         socket.current.emit('sendMessage', newMessage)
     };
 

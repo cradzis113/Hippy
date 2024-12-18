@@ -25,7 +25,7 @@ const ChatSearch = () => {
                 if (error) {
                     console.error('Search error:', error);
                 } else {
-                    const userName = userData.data ? userData.data.user.userName : userData.userName
+                    const userName = userData.data.user.userName
                     const filteredResults = results.filter(item => item.userName !== userName);
                     setSearchResult(filteredResults);
                 }
@@ -53,6 +53,9 @@ const ChatSearch = () => {
     const handleFocus = () => {
         setIsFocused(true);
         setBackState(true);
+
+        const userName = userData.data.user.userName
+        socket.current.emit('updateBackState', { backState: true, userName })
     };
 
     useEffect(() => {
