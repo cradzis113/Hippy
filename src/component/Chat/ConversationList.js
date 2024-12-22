@@ -264,10 +264,26 @@ const ConversationList = () => {
         const handlers = {
             notification: setNewMessage,
             messageHistoryUpdate: (updatedMessages, targetUser) => {
-                setChatMessageHistory(prevHistory => ({
-                    ...prevHistory,
-                    [targetUser]: [...prevHistory[targetUser], updatedMessages]
-                }))
+                setChatMessageHistory(prevHistory => {
+
+                    if (Object.keys(prevHistory).length < 1) {
+                        return { [targetUser]: [updatedMessages] }
+                    }
+
+                    if (!prevHistory[targetUser]) {
+                        return {
+                            ...prevHistory,
+                            [targetUser]: [updatedMessages]
+                        }
+                    }
+
+                    return ({
+                        ...prevHistory,
+                        [targetUser]: [...prevHistory[targetUser], ...messageBackState.messages, updatedMessages]
+                    })
+
+
+                })
             },
             readMessages: (updatedMessages, targetUser) => {
                 const messageExists = chatMessageHistory[targetUser].some(i => i.id === updatedMessages.id);
@@ -296,6 +312,18 @@ const ConversationList = () => {
             });
         });
 
+        socket.current.on('n', (data) => {
+            setChatMessageHistory(prev => {
+                const ke = Object.keys(prev);
+                const h = ke.reduce((acc, curr) => {
+                    acc[curr] = [...(prev[curr]), ...(data[curr])]; // Khởi tạo mảng rỗng nếu giá trị không tồn tại
+                    return acc;
+                }, {});
+                return h;
+            });
+
+        })
+
         // Register handlers
         Object.entries(handlers).forEach(([event, handler]) => {
             socket.current.on(event, handler);
@@ -309,22 +337,27 @@ const ConversationList = () => {
         };
     }, [socket.current]);
 
-    useEffect(() => {
-        console.log(chatMessageHistory)
-    }, [chatMessageHistory])
+    // useEffect(() => {
+    //     console.log(chatMessageHistory, 'useEf')
+    // }, [chatMessageHistory])
 
     useEffect(() => {
         const user = messageBackState.user
         if (messageBackState.messages.length > 0 && user) {
             setChatMessageHistory(prevHistory => {
-                console.log(chatMessageHistory)
-                console.log(messageBackState.messages)
-
-                const x = ({
-                    ...chatMessageHistory,
-                    [user]: [...chatMessageHistory[user], ...messageBackState.messages]
-                })
-                setChatMessageHistory(x)
+                let x
+                if (prevHistory) {
+                    x = ({
+                        ...prevHistory,
+                        [user]: [...prevHistory[user], ...messageBackState.messages]
+                    })
+                } else {
+                    x = ({
+                        ...chatMessageHistory,
+                        [user]: [...chatMessageHistory[user], ...messageBackState.messages]
+                    })
+                }
+                return x
             })
         }
     }, [messageBackState]);

@@ -23,11 +23,9 @@ const RecentConversations = forwardRef((props, ref) => {
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
-
     const handleClick = (user) => {
         setBackState(false);
         setCurrentChatUser(user);
-
 
         if (socket?.current) {
             const chatEventData = {
@@ -37,9 +35,9 @@ const RecentConversations = forwardRef((props, ref) => {
                 socketId: socket.current.id,
                 type: 'chatRequest'
             };
-
-            socket.current.emit('updateBackState', { backState: false, userName })
+            
             socket.current.emit('chatEvent', chatEventData);
+            socket.current.emit('updateBackState', { backState: false,  userName });
         }
     };
 

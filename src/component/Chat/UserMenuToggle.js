@@ -8,17 +8,25 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 
 const UserMenuToggle = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const { logout } = useAuth()
+  const socket = useSocket()
+  const { logout, userData } = useAuth()
   const { backState, setBackState } = useSetting()
 
+  const userName = userData.data.user.userName
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
+  const c = () => {
+    setBackState(false)
+    socket.current.emit('o', userName);
+  }
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -30,7 +38,7 @@ const UserMenuToggle = () => {
         aria-controls={open ? 'icon-text-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
-        onClick={backState ? () => setBackState(false) : handleClick}
+        onClick={backState ? c : handleClick}
       >
         {backState ? <ArrowBackIcon /> : <MenuIcon />}
       </IconButton>
