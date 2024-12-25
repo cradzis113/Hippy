@@ -25,7 +25,7 @@ const UserMenuToggle = () => {
 
   const c = () => {
     setBackState(false)
-    socket.current.emit('o', userName);
+    socket.current.emit('fetchUnseenMessages', userName);
   }
 
   const handleClose = () => {

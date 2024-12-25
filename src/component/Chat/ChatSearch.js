@@ -53,9 +53,6 @@ const ChatSearch = () => {
     const handleFocus = () => {
         setIsFocused(true);
         setBackState(true);
-
-        const userName = userData.data.user.userName
-        socket.current.emit('updateBackState', { backState: true, userName })
     };
 
     useEffect(() => {

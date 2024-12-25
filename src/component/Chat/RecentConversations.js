@@ -16,7 +16,7 @@ const RecentConversations = forwardRef((props, ref) => {
     const { setBackState } = useSetting();
 
     const userName = userData.data.user.userName;
-    const { searchResult, setCurrentChatUser, setMessageBackState, } = useData();
+    const { searchResult, setCurrentChatUser, } = useData();
 
     const isDesktop = useMediaQuery('(min-width: 926px)');
 
@@ -35,9 +35,8 @@ const RecentConversations = forwardRef((props, ref) => {
                 socketId: socket.current.id,
                 type: 'chatRequest'
             };
-            
+
             socket.current.emit('chatEvent', chatEventData);
-            socket.current.emit('updateBackState', { backState: false,  userName });
         }
     };
 
@@ -47,16 +46,6 @@ const RecentConversations = forwardRef((props, ref) => {
             containerRef.current.scrollLeft += event.deltaY * scrollSpeed;
         }
     }, []);
-
-    useEffect(() => {
-        if (socket.current) {
-            socket.current.on('messageBackState', (updatedMessages, user) => setMessageBackState(prev => ({
-                messages: [...prev.messages, updatedMessages],
-                user: user
-            })));
-            return () => socket.current.off('messageBackState');
-        }
-    }, [socket.current]);
 
     const UserAvatar = ({ user }) => (
         <Avatar

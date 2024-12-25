@@ -40,7 +40,6 @@ const UserProfileHeader = ({ user }) => {
         isActive: false,
         isResultsVisible: false
     });
-    const [currentUserStatus, setCurrentUserStatus] = useState(user);
 
     const handleSearch = React.useCallback((searchTerm) => {
         if (searchTerm.trim() === '') {
@@ -89,7 +88,6 @@ const UserProfileHeader = ({ user }) => {
 
         const handleUserStatusUpdate = (data) => {
             if (data.userName === user.userName) {
-                setCurrentUserStatus(data);
             }
         };
 
@@ -109,14 +107,14 @@ const UserProfileHeader = ({ user }) => {
                     {!searchState.isActive ? (
                         <Box>
                             <Typography variant="h6" fontWeight="bold" color="black" lineHeight={1.2}>
-                                {currentUserStatus.userName}
+                                {user.userName}
                             </Typography>
                             <Typography
                                 variant="body2"
-                                color={currentUserStatus.status === 'online' ? 'primary' : 'textSecondary'}
+                                color={user.status === 'online' ? 'primary' : 'textSecondary'}
                                 fontWeight={500}
                             >
-                                {currentUserStatus.status === 'online' ? currentUserStatus.status : currentUserStatus.lastSeenMessage}
+                                {user.status === 'online' ? user.status : user.lastSeenMessage}
                             </Typography>
                         </Box>
                     ) : (

@@ -12,7 +12,6 @@ export const DataProvider = ({ children }) => {
     const [selectedMessages, setSelectedMessages] = useState([]);
 
     const [focusMessage, setFocusMessage] = useState(null);
-    const [messageBackState, setMessageBackState] = useState({ messages: [], user: null });
 
     return (
         <DataContext.Provider value={{
@@ -22,8 +21,6 @@ export const DataProvider = ({ children }) => {
             setSearchResult,
             currentChatUser,
             setCurrentChatUser,
-            messageBackState,
-            setMessageBackState,
             selectedMessages,
             setSelectedMessages,
             focusMessage,
