@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ReplyIcon from '@mui/icons-material/Reply';
 import { RadioButtonUnchecked, RadioButtonChecked } from '@mui/icons-material';
 import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography, Checkbox } from '@mui/material';
+import _ from 'lodash';
 
 const MessageList = ({ user }) => {
     const socket = useSocket();
@@ -59,25 +60,11 @@ const MessageList = ({ user }) => {
             return setMessages([]);
         }
 
-        const groupedMessages = {};
-        messageHistory[currentUser].forEach((msg) => {
-            const dateKey = moment(msg.time).format('YYYY-MM-DD');
+        const groupedMessages = _.groupBy(messageHistory[currentUser], msg => moment(msg.time).format('YYYY-MM-DD'));
 
-            if (!groupedMessages[dateKey]) {
-                groupedMessages[dateKey] = {
-                    earliestTime: msg.time,
-                    messages: [],
-                };
-            }
-            if (msg.time < groupedMessages[dateKey].earliestTime) {
-                groupedMessages[dateKey].earliestTime = msg.time;
-            }
-            groupedMessages[dateKey].messages.push(msg);
-        });
-
-        const formattedMessages = Object.keys(groupedMessages).map(date => ({
-            time: groupedMessages[date].earliestTime,
-            messages: groupedMessages[date].messages,
+        const formattedMessages = _.map(groupedMessages, (group) => ({
+            time: _.minBy(group, 'time').time, // Get the earliest time
+            messages: group,
         }));
 
         setMessages(formattedMessages);
@@ -93,6 +80,7 @@ const MessageList = ({ user }) => {
             setCurrentUserMessageHistory(prev => [...prev, data])
         };
 
+        socket.current.on('unseenMessages', (d) => console.log(d)) // lỗi
         socket.current.on('messageSent', handleMessageSent);
         return () => {
             socket.current.off('messageSent', handleMessageSent);
@@ -102,31 +90,15 @@ const MessageList = ({ user }) => {
     useEffect(() => {
         if (currentUserMessageHistory.length === currentUserMessageHistoryLength) return;
 
-        const groupedMessages = {};
-        currentUserMessageHistory.forEach((msg) => {
-            const dateKey = moment(msg.time).format('YYYY-MM-DD');
+        const groupedMessages = _.groupBy(currentUserMessageHistory, msg => moment(msg.time).format('YYYY-MM-DD'));
 
-            if (!groupedMessages[dateKey]) {
-                groupedMessages[dateKey] = {
-                    earliestTime: msg.time,
-                    messages: [],
-                };
-            }
-
-            if (msg.time < groupedMessages[dateKey].earliestTime) {
-                groupedMessages[dateKey].earliestTime = msg.time;
-            }
-
-            groupedMessages[dateKey].messages.push(msg);
-        });
-
-        const formattedMessages = Object.keys(groupedMessages).map(date => ({
-            time: groupedMessages[date].earliestTime,
-            messages: groupedMessages[date].messages,
+        const formattedMessages = _.map(groupedMessages, (group) => ({
+            time: _.minBy(group, 'time').time, // Get the earliest time
+            messages: group,
         }));
-        
+
         setMessages(formattedMessages);
-    }, [currentUserMessageHistoryLength, currentUserMessageHistory])
+    }, [currentUserMessageHistoryLength, currentUserMessageHistory]);
 
     useEffect(() => {
         if (focusMessage) {
@@ -173,6 +145,14 @@ const MessageList = ({ user }) => {
             setSelectedMessages([...selectedMessages, message]);
         }
     };
+
+    const calculateMessagePosition = (item) => {
+        if (_.isEmpty(selectedMessages)) {
+            return item.senderUserName === currentUser ? 620 : 650
+        } else {
+            return 650
+        }
+    }
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
@@ -266,7 +246,8 @@ const MessageList = ({ user }) => {
                                             >
                                                 <Box
                                                     sx={{
-                                                        width: item.senderUserName === currentUser ? 620 : 650, padding: 1,
+                                                        width: calculateMessagePosition(item),
+                                                        padding: 1,
                                                         display: 'flex',
                                                         margin: '0 auto',
                                                         flexDirection: 'row',
@@ -288,12 +269,14 @@ const MessageList = ({ user }) => {
                                                             }}
                                                         />
                                                     )}
-                                                    <Box sx={{
-                                                        flex: 1,
-                                                        display: 'flex',
-                                                        justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
-                                                        borderRadius: '10px'
-                                                    }}>
+                                                    <Box
+                                                        sx={{
+                                                            flex: 1,
+                                                            display: 'flex',
+                                                            justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
+                                                            borderRadius: '10px'
+                                                        }}
+                                                    >
                                                         <MessageItem
                                                             item={item}
                                                             currentUser={currentUser}

@@ -23,7 +23,7 @@ const UserMenuToggle = () => {
     setAnchorEl(event.currentTarget);
   };
 
-  const c = () => {
+  const handleBackStateChange = () => {
     setBackState(false)
     socket.current.emit('fetchUnseenMessages', userName);
   }
@@ -38,7 +38,7 @@ const UserMenuToggle = () => {
         aria-controls={open ? 'icon-text-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
-        onClick={backState ? c : handleClick}
+        onClick={backState ? handleBackStateChange : handleClick}
       >
         {backState ? <ArrowBackIcon /> : <MenuIcon />}
       </IconButton>

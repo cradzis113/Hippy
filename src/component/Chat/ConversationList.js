@@ -305,13 +305,11 @@ const ConversationList = () => {
                     };
                 });
             },
-            // receiveUserData: (userData) => setChatMessageHistory(userData.messageHistory),
-            k: (data) => {
+            recipientUserUpdate: (data) => {
                 setUserData({ data: { user: data } })
             },
             carouselDataUpdate: setCarouselSlides,
             unseenMessages: (data) => {
-                console.log(1)
                 const mergeChatMessages = (currentHistory, newData) => {
                     return Object.keys(currentHistory).reduce((acc, curr) => {
                         const existingMessages = newData[curr] || [];
@@ -320,7 +318,7 @@ const ConversationList = () => {
                                 existingMsg => existingMsg.id === newMsg.id
                             )
                         );
-                        acc[curr] = [...existingMessages, ...newMessages];
+                        acc[curr] = [...newMessages, ...existingMessages];
                         return acc;
                     }, {});
                 };
@@ -331,7 +329,6 @@ const ConversationList = () => {
         };
 
         socket.current.on("connect", () => {
-            socket.current.emit('getUserData', currentUserName);
             socket.current.emit('chatEvent', {
                 socketId: socket.current.id,
                 userName: currentUserName,
@@ -360,7 +357,6 @@ const ConversationList = () => {
         }
     }, [userTarget]);
 
-    // Memoize processed messages
     const processedMessages = useMemo(() => {
         if (!chatMessageHistory) return [];
         return Object.keys(chatMessageHistory).map(userName => ({

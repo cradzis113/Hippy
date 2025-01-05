@@ -2,27 +2,18 @@ import { Box, Chip, IconButton, Popper, Typography } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { green } from "@mui/material/colors";
-import moment from "moment";
 import { useEffect, useState, useMemo } from "react";
 import ThreeSixtyOutlinedIcon from '@mui/icons-material/ThreeSixtyOutlined';
 import { useSetting } from "../../context/SettingContext";
+import _ from "lodash";
+import moment from "moment";
 
 const groupMessagesByDate = (messages) => {
-    const groupedMessages = messages.reduce((acc, msg) => {
-        const dateKey = moment(msg.time).format("YYYY-MM-DD");
-        if (!acc[dateKey]) {
-            acc[dateKey] = { earliestTime: msg.time, messages: [] };
-        }
-        acc[dateKey].messages.push(msg);
-        if (msg.time < acc[dateKey].earliestTime) {
-            acc[dateKey].earliestTime = msg.time;
-        }
-        return acc;
-    }, {});
+    const groupedMessages = _.groupBy(messages, msg => moment(msg.time).format("YYYY-MM-DD"));
 
-    return Object.entries(groupedMessages).map(([date, group]) => ({
-        time: group.earliestTime,
-        messages: group.messages,
+    return _.map(groupedMessages, (group) => ({
+        time: _.minBy(group, 'time').time,
+        messages: group,
     }));
 };
 
@@ -43,7 +34,7 @@ const PinnedMessageItem = () => {
     const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
-        if (carouselSlides.length > 0) {
+        if (!_.isEmpty(carouselSlides)) {
             setMessages(groupMessagesByDate(carouselSlides));
         } else if (currentChatUserName && pinnedMessages[currentChatUserName]) {
             setMessages(groupMessagesByDate(pinnedMessages[currentChatUserName]));

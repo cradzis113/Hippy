@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ChatHeader from './ChatHeader';
 import Conversation from './ConversationList';
 import RecentChats from './RecentConversations';
@@ -9,6 +9,7 @@ import { green } from '@mui/material/colors';
 import { useData } from '../../context/DataContext';
 import PinnedMessagesList from '../Pinned/PinnedMessagesList';
 import UserProfileHeader from './UserProfileHeader';
+import _ from 'lodash';
 
 const ChatInterface = () => {
     const { backState } = useSetting();
@@ -41,7 +42,7 @@ const ChatInterface = () => {
                     bgcolor: green[50]
                 }}
             >
-                {Object.keys(currentChatUser).length > 0 && (
+                {!_.isEmpty(currentChatUser) > 0 && (
                     <>
                         {pinnedViewActive ? <PinnedMessagesList /> : (
                             <>
