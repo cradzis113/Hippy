@@ -7,6 +7,7 @@ import { useSocket } from '../../context/SocketContext';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import BadgeAvatars from './BadgeAvatars';
+import _, { set } from 'lodash';
 
 // Utility functions
 const formatTime = (timestamp) => {
@@ -148,7 +149,13 @@ const ConversationItem = memo(({
 const ConversationList = () => {
     const socket = useSocket();
     const { userData, setUserData } = useAuth();
-    const { setCurrentChatUser, setCarouselSlides, carouselSlides } = useData();
+    const {
+        setCurrentChatUser,
+        setCarouselSlides,
+        carouselSlides,
+        storedMessages,
+        setStoredMessages
+    } = useData();
 
     const currentUserName = userData?.data?.user?.userName || '';
     const initialMessageHistory = userData?.data?.user?.messageHistory || {};
@@ -262,6 +269,18 @@ const ConversationList = () => {
         const handlers = {
             notification: setNewMessage,
             messageHistoryUpdate: (updatedMessages, targetUser) => {
+                setStoredMessages(prev => {
+                    const uniqueMessages = _.uniqBy(
+                        [...(prev[targetUser] || []), updatedMessages],
+                        'id'
+                    );
+
+                    return {
+                        ...prev,
+                        [targetUser]: uniqueMessages
+                    };
+                });
+
                 setChatMessageHistory(prevHistory => {
                     if (Object.keys(prevHistory).length < 1) {
                         return { [targetUser]: [updatedMessages] }
@@ -274,34 +293,38 @@ const ConversationList = () => {
                         }
                     }
 
+                    const mergedMessages = [...prevHistory[targetUser], updatedMessages]
+                    const uniqueMessages = _.uniqBy(mergedMessages.reverse(), 'id').reverse();
                     return ({
                         ...prevHistory,
-                        [targetUser]: [...prevHistory[targetUser], updatedMessages]
+                        [targetUser]: uniqueMessages
                     })
                 })
             },
             readMessages: (updatedMessages, targetUser) => {
-                setChatMessageHistory(prevHistory => {
-                    if (!chatMessageHistory[targetUser]) {
-                        if (prevHistory[targetUser]) {
-                            const cleanMessages = prevHistory[targetUser].map(message => {
-                                const { seen, ...rest } = message;
-                                return rest;
-                            });
-                            return {
-                                ...prevHistory,
-                                [targetUser]: [...cleanMessages, updatedMessages]
-                            };
-                        }
-                    }
+                setStoredMessages(prev => {
+                    const uniqueMessages = _.uniqBy(
+                        [...(prev[targetUser] || []), updatedMessages],
+                        'id'
+                    );
 
-                    const cleanMessages = chatMessageHistory[targetUser].map(message => {
+                    return {
+                        ...prev,
+                        [targetUser]: uniqueMessages
+                    };
+                });
+
+                setChatMessageHistory(prevHistory => {
+                    const cleanMessages = prevHistory[targetUser].map(message => {
                         const { seen, ...rest } = message;
                         return rest;
                     });
+
+                    const mergedMessages = [...cleanMessages, updatedMessages]
+                    const uniqueMessages = _.uniqBy(mergedMessages.reverse(), 'id').reverse();
                     return {
                         ...prevHistory,
-                        [targetUser]: [...cleanMessages, updatedMessages]
+                        [targetUser]: uniqueMessages
                     };
                 });
             },
@@ -324,7 +347,7 @@ const ConversationList = () => {
                 };
 
                 const updatedHistory = mergeChatMessages(chatMessageHistory, data);
-                setChatMessageHistory(updatedHistory);
+                setChatMessageHistory(prevHistory => mergeChatMessages(prevHistory, data));
             }
         };
 
@@ -346,6 +369,25 @@ const ConversationList = () => {
             });
         };
     }, [socket.current]);
+
+    useEffect(() => {
+        const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {
+            objValue = objValue || [];
+        
+            const merged = _.unionWith(objValue, srcValue, _.isEqual);
+        
+            return merged.map((msg, index, arr) => {
+                if (index === arr.length - 1) {
+                    return msg;
+                }
+        
+                const { seen, ...rest } = msg;
+                return rest;
+            });
+        });
+        
+        setChatMessageHistory(result);
+    }, [])
 
     useEffect(() => {
         console.log(chatMessageHistory, 'useEf')
