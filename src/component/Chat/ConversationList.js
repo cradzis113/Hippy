@@ -346,7 +346,6 @@ const ConversationList = () => {
                     }, {});
                 };
 
-                const updatedHistory = mergeChatMessages(chatMessageHistory, data);
                 setChatMessageHistory(prevHistory => mergeChatMessages(prevHistory, data));
             }
         };
@@ -373,19 +372,29 @@ const ConversationList = () => {
     useEffect(() => {
         const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {
             objValue = objValue || [];
-        
+            srcValue = srcValue || [];
+
             const merged = _.unionWith(objValue, srcValue, _.isEqual);
-        
+
             return merged.map((msg, index, arr) => {
-                if (index === arr.length - 1) {
+                if (index === arr.length - 1 && msg.seen) {
                     return msg;
                 }
-        
+
+                if (!arr[arr.length - 1].seen) {
+                    const lastSeenIndex = _.findLastIndex(arr,
+                        (m) => m.seen
+                    );
+                    if (lastSeenIndex === index) {
+                        return msg;
+                    }
+                }
+
                 const { seen, ...rest } = msg;
                 return rest;
             });
         });
-        
+        // khi mà chưa có message nào tồn tại bật toggle sẽ double msg
         setChatMessageHistory(result);
     }, [])
 
