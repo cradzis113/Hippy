@@ -39,7 +39,7 @@ const MessageList = ({ user }) => {
     const currentUserMessageHistoryLength = useRef(currentUserMessageHistory.length);
 
     const { activeSelectedMessage } = useSetting();
-    const { selectedMessages, setSelectedMessages, focusMessage } = useData();
+    const { selectedMessages, setSelectedMessages, focusMessage , storedMessages, currentChatUser } = useData();
 
     const messagesEndRef = useRef(null);
     const [isExpanding, setIsExpanding] = useState(false);
@@ -80,7 +80,7 @@ const MessageList = ({ user }) => {
             setCurrentUserMessageHistory(prev => [...prev, data])
         };
 
-        socket.current.on('unseenMessages', (d) => console.log(d)) // lỗi
+
         socket.current.on('messageSent', handleMessageSent);
         return () => {
             socket.current.off('messageSent', handleMessageSent);
@@ -119,6 +119,14 @@ const MessageList = ({ user }) => {
             };
         }
     }, [focusMessage]);
+
+    useEffect(() => {
+        if (messages && _.size(storedMessages[currentChatUser.userName]) > 0) {
+            // const h = _.uniqBy([messages])
+            console.log(messages)
+            console.log(storedMessages)
+        }
+    }, [messages, currentChatUser])
 
     const handleSendMessage = () => {
         if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);

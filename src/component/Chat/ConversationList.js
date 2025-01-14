@@ -304,13 +304,13 @@ const ConversationList = () => {
             readMessages: (updatedMessages, targetUser) => {
                 setStoredMessages(prev => {
                     const uniqueMessages = _.uniqBy(
-                        [...(prev[targetUser] || []), updatedMessages],
+                        [...(prev[targetUser] || []), updatedMessages].reverse(),
                         'id'
                     );
 
                     return {
                         ...prev,
-                        [targetUser]: uniqueMessages
+                        [targetUser]: uniqueMessages.reverse()
                     };
                 });
 
@@ -374,8 +374,7 @@ const ConversationList = () => {
             objValue = objValue || [];
             srcValue = srcValue || [];
 
-            const merged = _.unionWith(objValue, srcValue, _.isEqual);
-
+            const merged = _.unionWith(objValue, srcValue, (a, b) => a.id === b.id);
             return merged.map((msg, index, arr) => {
                 if (index === arr.length - 1 && msg.seen) {
                     return msg;
@@ -385,6 +384,7 @@ const ConversationList = () => {
                     const lastSeenIndex = _.findLastIndex(arr,
                         (m) => m.seen
                     );
+
                     if (lastSeenIndex === index) {
                         return msg;
                     }
@@ -394,13 +394,13 @@ const ConversationList = () => {
                 return rest;
             });
         });
-        // khi mà chưa có message nào tồn tại bật toggle sẽ double msg
+
         setChatMessageHistory(result);
     }, [])
 
-    useEffect(() => {
-        console.log(chatMessageHistory, 'useEf')
-    }, [chatMessageHistory])
+    // useEffect(() => {
+    //     console.log(chatMessageHistory, 'useEf')
+    // }, [chatMessageHistory])
 
     useEffect(() => {
         if (carouselSlides.length < 1 && pinnedMessages.length > 0) {
