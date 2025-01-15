@@ -35,11 +35,11 @@ const MessageList = ({ user }) => {
 
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
-    const [currentUserMessageHistory, setCurrentUserMessageHistory] = useState(user?.messageHistory?.[currentUser] || []);
+    const [currentUserMessageHistory, setCurrentUserMessageHistory] = useState([]);
     const currentUserMessageHistoryLength = useRef(currentUserMessageHistory.length);
 
     const { activeSelectedMessage } = useSetting();
-    const { selectedMessages, setSelectedMessages, focusMessage , storedMessages, currentChatUser } = useData();
+    const { selectedMessages, setSelectedMessages, focusMessage, storedMessages, currentChatUser } = useData();
 
     const messagesEndRef = useRef(null);
     const [isExpanding, setIsExpanding] = useState(false);
@@ -63,9 +63,13 @@ const MessageList = ({ user }) => {
         const groupedMessages = _.groupBy(messageHistory[currentUser], msg => moment(msg.time).format('YYYY-MM-DD'));
 
         const formattedMessages = _.map(groupedMessages, (group) => ({
-            time: _.minBy(group, 'time').time, // Get the earliest time
+            time: _.minBy(group, 'time').time, 
             messages: group,
         }));
+
+        if (user) {
+            setCurrentUserMessageHistory(user.messageHistory[currentUser])
+        }
 
         setMessages(formattedMessages);
     }, [user, currentUser]);
@@ -89,11 +93,9 @@ const MessageList = ({ user }) => {
 
     useEffect(() => {
         if (currentUserMessageHistory.length === currentUserMessageHistoryLength) return;
-
         const groupedMessages = _.groupBy(currentUserMessageHistory, msg => moment(msg.time).format('YYYY-MM-DD'));
-
         const formattedMessages = _.map(groupedMessages, (group) => ({
-            time: _.minBy(group, 'time').time, // Get the earliest time
+            time: _.minBy(group, 'time').time,
             messages: group,
         }));
 
@@ -121,12 +123,13 @@ const MessageList = ({ user }) => {
     }, [focusMessage]);
 
     useEffect(() => {
+        console.log(currentUserMessageHistory)
         if (messages && _.size(storedMessages[currentChatUser.userName]) > 0) {
             // const h = _.uniqBy([messages])
-            console.log(messages)
-            console.log(storedMessages)
+            // console.log(messages)
+            // console.log(storedMessages)
         }
-    }, [messages, currentChatUser])
+    }, [messages, currentChatUser, currentUserMessageHistory])
 
     const handleSendMessage = () => {
         if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
