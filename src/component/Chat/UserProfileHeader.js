@@ -26,12 +26,13 @@ import { useSocket } from '../../context/SocketContext';
 import VerticalCarousel from './VerticalCarousel';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import { useSetting } from '../../context/SettingContext';
+import _ from 'lodash';
 
 const UserProfileHeader = ({ user }) => {
     const socket = useSocket();
     const { userData } = useAuth();
-    const { carouselSlides } = useData()
-    const { setPinnedViewActive } = useSetting()
+    const { carouselSlides } = useData();
+    const { setPinnedViewActive } = useSetting();
 
     const searchInputRef = useRef(null);
     const [searchState, setSearchState] = useState({
@@ -40,6 +41,13 @@ const UserProfileHeader = ({ user }) => {
         isActive: false,
         isResultsVisible: false
     });
+
+    useEffect(() => {
+        console.log(userData.data.user.pinnedInfo)
+        console.log(user.pinnedInfo)
+        const y = _.intersectionWith(userData.data.user.pinnedInfo, user.pinnedInfo, (a, b) => a.id === b.id)
+        console.log(y)
+    }, [user, carouselSlides, userData])
 
     const handleSearch = React.useCallback((searchTerm) => {
         if (searchTerm.trim() === '') {

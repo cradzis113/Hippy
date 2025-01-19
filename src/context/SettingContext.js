@@ -6,9 +6,18 @@ export const SettingProvider = ({ children }) => {
     const [backState, setBackState] = useState(false);
     const [pinnedViewActive, setPinnedViewActive] = useState(false);
     const [activeSelectedMessage, setActiveSelectedMessage] = useState(false);
-
+    const [fi, setFi] = useState(true)
     return (
-        <SettingContext.Provider value={{ backState, setBackState, pinnedViewActive, setPinnedViewActive, activeSelectedMessage, setActiveSelectedMessage }}>
+        <SettingContext.Provider value={{
+            backState,
+            setBackState,
+            pinnedViewActive,
+            setPinnedViewActive,
+            activeSelectedMessage,
+            setActiveSelectedMessage,
+            fi,
+            setFi
+        }}>
             {children}
         </SettingContext.Provider>
     );

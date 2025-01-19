@@ -38,7 +38,7 @@ const MessageList = ({ user }) => {
     const [currentUserMessageHistory, setCurrentUserMessageHistory] = useState([]);
     const currentUserMessageHistoryLength = useRef(currentUserMessageHistory.length);
 
-    const { activeSelectedMessage } = useSetting();
+    const { activeSelectedMessage, fi, setFi } = useSetting();
     const { selectedMessages, setSelectedMessages, focusMessage, storedMessages, currentChatUser } = useData();
 
     const messagesEndRef = useRef(null);
@@ -63,11 +63,13 @@ const MessageList = ({ user }) => {
         const groupedMessages = _.groupBy(messageHistory[currentUser], msg => moment(msg.time).format('YYYY-MM-DD'));
 
         const formattedMessages = _.map(groupedMessages, (group) => ({
-            time: _.minBy(group, 'time').time, 
+            time: _.minBy(group, 'time').time,
             messages: group,
         }));
 
-        if (user) {
+        if (_.size(storedMessages[currentChatUser.userName]?.slice(1)) > 0) {
+            setCurrentUserMessageHistory([...user.messageHistory[currentUser], ...storedMessages[currentChatUser.userName].slice(1)])
+        } else {
             setCurrentUserMessageHistory(user.messageHistory[currentUser])
         }
 
@@ -83,7 +85,6 @@ const MessageList = ({ user }) => {
 
             setCurrentUserMessageHistory(prev => [...prev, data])
         };
-
 
         socket.current.on('messageSent', handleMessageSent);
         return () => {
@@ -123,13 +124,21 @@ const MessageList = ({ user }) => {
     }, [focusMessage]);
 
     useEffect(() => {
-        console.log(currentUserMessageHistory)
-        if (messages && _.size(storedMessages[currentChatUser.userName]) > 0) {
-            // const h = _.uniqBy([messages])
-            // console.log(messages)
-            // console.log(storedMessages)
+        if (messages[messages.length - 1]?.messages && _.size(storedMessages[currentChatUser.userName]) > 0 && !fi) {
+            const newMessages = _.differenceBy(storedMessages[currentChatUser.userName], messages[messages.length - 1].messages, 'id');
+            if (newMessages.length > 0) {
+                const updatedMessages = [...messages];
+
+                updatedMessages[updatedMessages.length - 1] = {
+                    ...updatedMessages[updatedMessages.length - 1],
+                    messages: [...updatedMessages[updatedMessages.length - 1].messages, ...newMessages]
+                };
+
+                setFi(true)
+                setMessages(updatedMessages);
+            }
         }
-    }, [messages, currentChatUser, currentUserMessageHistory])
+    }, [messages, currentChatUser, storedMessages, fi]);
 
     const handleSendMessage = () => {
         if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
