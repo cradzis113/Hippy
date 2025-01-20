@@ -26,7 +26,6 @@ import { useSocket } from '../../context/SocketContext';
 import VerticalCarousel from './VerticalCarousel';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import { useSetting } from '../../context/SettingContext';
-import _ from 'lodash';
 
 const UserProfileHeader = ({ user }) => {
     const socket = useSocket();
@@ -34,6 +33,7 @@ const UserProfileHeader = ({ user }) => {
     const { carouselSlides } = useData();
     const { setPinnedViewActive } = useSetting();
 
+    const currentUser = userData?.data?.user?.userName;
     const searchInputRef = useRef(null);
     const [searchState, setSearchState] = useState({
         query: '',
@@ -42,19 +42,11 @@ const UserProfileHeader = ({ user }) => {
         isResultsVisible: false
     });
 
-    useEffect(() => {
-        console.log(userData.data.user.pinnedInfo)
-        console.log(user.pinnedInfo)
-        const y = _.intersectionWith(userData.data.user.pinnedInfo, user.pinnedInfo, (a, b) => a.id === b.id)
-        console.log(y)
-    }, [user, carouselSlides, userData])
-
     const handleSearch = React.useCallback((searchTerm) => {
         if (searchTerm.trim() === '') {
             return setSearchState(prev => ({ ...prev, results: [] }));
         }
 
-        const currentUser = userData?.data?.user?.userName;
         const messageHistoryForUser = user.messageHistory[currentUser];
         const filteredMessages = messageHistoryForUser.filter(
             message => message.message.toLowerCase().includes(searchTerm.toLowerCase())
@@ -284,8 +276,8 @@ const UserProfileHeader = ({ user }) => {
                 </Box>
                 {!searchState.isActive && (
                     <>
-                        {carouselSlides?.length > 0 && <VerticalCarousel slides={carouselSlides} />}
-                        {carouselSlides?.length > 1 && (
+                        {userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && <VerticalCarousel slides={carouselSlides} />}
+                        {userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && carouselSlides?.length > 1 && (
                             <IconButton onClick={() => setPinnedViewActive(true)}>
                                 <PushPinOutlinedIcon />
                             </IconButton>
