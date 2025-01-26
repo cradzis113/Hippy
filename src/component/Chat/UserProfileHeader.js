@@ -88,6 +88,7 @@ const UserProfileHeader = ({ user }) => {
 
         const handleUserStatusUpdate = (data) => {
             if (data.userName === user.userName) {
+                //
             }
         };
 

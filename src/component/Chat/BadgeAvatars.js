@@ -1,12 +1,13 @@
 import Badge from '@mui/material/Badge';
 import Avatar from '@mui/material/Avatar';
+import _ from 'lodash';
 
-export default function BadgeAvatars() {
+export default function BadgeAvatars({ userName, activeUsers }) {
   return (
     <Badge
       overlap="circular"
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      variant="dot"
+      variant={_.includes(activeUsers, userName) ? 'dot' : 'standard'}
       sx={{
         '& .MuiBadge-badge': {
           backgroundColor: '#44b700',
@@ -36,7 +37,7 @@ export default function BadgeAvatars() {
         },
       }}
     >
-      <Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" sx={{ width: 53, height: 53}} />
+      <Avatar alt="Remy Sharp" src="" sx={{ width: 53, height: 53 }} />
     </Badge>
   );
 }

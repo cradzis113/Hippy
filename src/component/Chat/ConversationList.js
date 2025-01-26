@@ -7,9 +7,8 @@ import { useSocket } from '../../context/SocketContext';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import BadgeAvatars from './BadgeAvatars';
-import _, { set } from 'lodash';
+import _ from 'lodash';
 
-// Utility functions
 const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const [datePart, timePart] = timestamp.split(' ');
@@ -25,7 +24,6 @@ const shouldDisplayMessage = (lastMessage, unreadMessageCount) => {
     return !(!lastMessage.message.includes(`Bạn đã thu hồi một tin nhắn`) && unreadMessageCount > 0);
 };
 
-// Memoized conversation item component
 const ConversationItem = memo(({
     userName,
     lastMessage,
@@ -33,7 +31,9 @@ const ConversationItem = memo(({
     currentUserName,
     newMessage,
     onClick,
-    messageHistory
+    messageHistory,
+    currentChatUser,
+    messageQueueState
 }) => {
     const renderSeenStatus = () => {
         if (Object.keys(newMessage).length === 5) {
@@ -79,7 +79,7 @@ const ConversationItem = memo(({
             onClick={onClick}
         >
             <ListItemAvatar>
-                <BadgeAvatars />
+                <BadgeAvatars userName={userName} activeUsers={messageQueueState} />
             </ListItemAvatar>
             <ListItemText
                 primary={
@@ -154,7 +154,8 @@ const ConversationList = () => {
         setCarouselSlides,
         carouselSlides,
         storedMessages,
-        setStoredMessages
+        setStoredMessages,
+        currentChatUser
     } = useData();
 
     const currentUserName = userData?.data?.user?.userName || '';
@@ -164,6 +165,7 @@ const ConversationList = () => {
     const [newMessage, setNewMessage] = useState('');
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
     const [userTarget, setUserTarget] = useState('');
+    const [messageQueue, setMessageQueue] = useState([])
 
     const pinnedMessages = pinnedInfo[userTarget] || [];
 
@@ -268,6 +270,13 @@ const ConversationList = () => {
         if (!socket.current || !userData?.data?.user) return;
         const handlers = {
             notification: setNewMessage,
+            addMessagesToQueue: (newMessages) => {
+                setMessageQueue((prevQueue) => _.uniq([...prevQueue, ...newMessages]));
+            },
+            removeMessageFromQueue: (messageToRemove) => {
+                const updatedQueue = _.without(messageQueue, messageToRemove);
+                setMessageQueue(updatedQueue);
+            },
             messageHistoryUpdate: (updatedMessages, targetUser) => {
                 setStoredMessages(prev => {
                     const uniqueMessages = _.uniqBy(
@@ -367,7 +376,7 @@ const ConversationList = () => {
                 socket.current.off(event);
             });
         };
-    }, [socket.current]);
+    }, [socket.current, messageQueue]);
 
     useEffect(() => {
         const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {
@@ -397,10 +406,6 @@ const ConversationList = () => {
 
         setChatMessageHistory(result);
     }, [])
-
-    // useEffect(() => {
-    //     console.log(chatMessageHistory, 'useEf')
-    // }, [chatMessageHistory])
 
     useEffect(() => {
         if (carouselSlides.length < 1 && pinnedMessages.length > 0) {
@@ -448,6 +453,8 @@ const ConversationList = () => {
                         newMessage={newMessage}
                         onClick={() => handleClick(userName)}
                         messageHistory={chatMessageHistory[userName]}
+                        currentChatUser={currentChatUser}
+                        messageQueueState={messageQueue}
                     />
                 ))}
             </List>
