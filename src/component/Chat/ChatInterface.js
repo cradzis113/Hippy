@@ -1,7 +1,7 @@
 import React from 'react';
 import ChatHeader from './ChatHeader';
 import Conversation from './ConversationList';
-import RecentChats from './RecentConversations';
+import RecentConversations from './RecentConversations';
 import MessageList from '../Message/MessageList';
 import { useSetting } from '../../context/SettingContext';
 import { Box, Fade } from '@mui/material';
@@ -31,7 +31,7 @@ const ChatInterface = () => {
                 <ChatHeader />
                 {!backState && <Conversation />}
                 <Fade in={backState} timeout={{ enter: 300, exit: 0 }}>
-                    <RecentChats />
+                    <RecentConversations />
                 </Fade>
             </Box>
             <Box

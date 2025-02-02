@@ -10,7 +10,7 @@ import { useSetting } from '../../context/SettingContext';
 import moment from 'moment';
 
 import MessageDeletionNotification from './MessageDeletionNotification';
-import useSendMessage from '../../hook/UseSendMessage';
+import useSendMessage from '../../hook/useSendMessage';
 import MessageSelectionBar from './MessageSelectionBar';
 
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,16 +22,7 @@ import _ from 'lodash';
 const MessageList = ({ user }) => {
     const socket = useSocket();
     const { userData } = useAuth();
-
-    const {
-        message,
-        setMessage,
-        sendMessage,
-        userReplied,
-        setUserReplied,
-        messageReplied,
-        setMessageReplied
-    } = useSendMessage();
+    const { userReplied, setUserReplied, messageReplied, setMessageReplied } = useSendMessage();
 
     const [messages, setMessages] = useState([]);
     const currentUser = userData?.data?.user?.userName;
@@ -83,7 +74,24 @@ const MessageList = ({ user }) => {
                 return setMessages([]);
             }
 
-            setCurrentUserMessageHistory(prev => [...prev, data])
+            setCurrentUserMessageHistory(prevMessages => {
+                console.log(data)
+                if (data.revoked) {
+                    const messageIndex = _.findIndex(prevMessages, msg => msg.id === data.id);
+                    if (messageIndex !== -1) {
+                        const updatedMessages = [...prevMessages];
+                        updatedMessages[messageIndex] = data;
+                        return updatedMessages;
+                    }
+                    return prevMessages;
+                }
+
+                if (_.isArray(data)) {
+                    return _.values({ ..._.keyBy(prevMessages, 'id'), ..._.keyBy(data, 'id') });
+                }
+
+                return [...prevMessages, data];
+            });
         };
 
         socket.current.on('messageSent', handleMessageSent);
@@ -94,12 +102,13 @@ const MessageList = ({ user }) => {
 
     useEffect(() => {
         if (currentUserMessageHistory.length === currentUserMessageHistoryLength) return;
+
         const groupedMessages = _.groupBy(currentUserMessageHistory, msg => moment(msg.time).format('YYYY-MM-DD'));
         const formattedMessages = _.map(groupedMessages, (group) => ({
             time: _.minBy(group, 'time').time,
             messages: group,
         }));
-
+        // console.log(currentUserMessageHistory)
         setMessages(formattedMessages);
     }, [currentUserMessageHistoryLength, currentUserMessageHistory]);
 
@@ -139,10 +148,6 @@ const MessageList = ({ user }) => {
             }
         }
     }, [messages, currentChatUser, storedMessages, fi]);
-
-    const handleSendMessage = () => {
-        if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
-    };
 
     const handleCloseReliedMessage = () => {
         setMessageReplied(null);
@@ -327,7 +332,7 @@ const MessageList = ({ user }) => {
                         <ListItem
                             disablePadding
                             secondaryAction={
-                                <IconButton aria-label="close" onClick={handleCloseReliedMessage}>
+                                <IconButton onClick={handleCloseReliedMessage}>
                                     <CloseIcon />
                                 </IconButton>
                             }
@@ -374,9 +379,7 @@ const MessageList = ({ user }) => {
                     />
                 ) : (
                     <MessageInput
-                        message={message}
-                        setMessage={setMessage}
-                        handleSendMessage={handleSendMessage}
+                        user={user}
                         showEmojiPicker={showEmojiPicker}
                         setShowEmojiPicker={setShowEmojiPicker}
                     />

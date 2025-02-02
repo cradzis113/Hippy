@@ -7,13 +7,13 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({})
-  
-  const login = () => setIsAuthenticated(true);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const login = () => setIsAuthenticated(true);
 
   const logout = async () => {
     try {
-      const response = await fetchAPI('http://localhost:3001/api/clear-cookie', 'POST', null, null, true);
+      const response = await fetchAPI('http://192.168.1.7:3001/api/clear-cookie', 'POST', null, null, true);
       if (response.status === 200) {
         setIsAuthenticated(false);
       }
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetchAPI('http://localhost:3001/api/getuserdata', 'GET', null, null, true);
+        const response = await fetchAPI('http://192.168.1.7:3001/api/getuserdata', 'GET', null, null, true);
         if (response.status === 200) {
           setUserData(response);
           setIsAuthenticated(true);

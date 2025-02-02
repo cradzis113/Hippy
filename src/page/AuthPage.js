@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardMedia, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography } from '@mui/material';
 import React from 'react';
 import UseAuth from '../hook/UseAuth';
 
@@ -14,7 +14,6 @@ const AuthPage = () => {
     sendVerificationCode,
     isButtonEnabled
   } = UseAuth();
-
   return (
     <>
       {responseStatus ? (
@@ -29,6 +28,16 @@ const AuthPage = () => {
             label={invalidMessage ? invalidMessage : 'code'}
             autoComplete='off'
             slotProps={{
+              inputLabel: {
+                sx: {
+                  '&.Mui-focused': {
+                    color: invalidMessage ? 'red' : '#2196f3'
+                  },
+                  '&:hover': {
+                    color: invalidMessage ? 'red' : '#2196f3'
+                  }
+                }
+              },
               input: {
                 onInput: filterCodeInput,
               }
@@ -54,14 +63,12 @@ const AuthPage = () => {
           alignItems: 'center',
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', margin: '100px 0', }}>
-            <Card elevation={0}>
-              <CardMedia
-                component='img'
-                height={160}
-                image='https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2019_Logo.svg'
-                alt='Telegram Logo'
-              />
-            </Card>
+            <Box
+              component='img'
+              height={160}
+              src='https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2019_Logo.svg'
+              alt='Telegram Logo'
+            />
             <Typography variant='h4' sx={{ mt: 5, fontWeight: 'bold' }}>
               Sign in to Telegram
             </Typography>

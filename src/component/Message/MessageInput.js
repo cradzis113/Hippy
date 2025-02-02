@@ -5,9 +5,21 @@ import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
 import EmojiPicker from 'emoji-picker-react';
 import useEmojiPicker from '../../hook/useEmojiPicker';
+import useSendMessage from '../../hook/useSendMessage';
 
-const MessageInput = ({ message, setMessage, handleSendMessage, showEmojiPicker, setShowEmojiPicker }) => {
+const MessageInput = ({ user, showEmojiPicker, setShowEmojiPicker }) => {
     const { emojiPickerRef, handleEmojiClick } = useEmojiPicker();
+    const {
+        message,
+        setMessage,
+        sendMessage,
+        userReplied,
+        messageReplied,
+    } = useSendMessage();
+
+    const handleSendMessage = () => {
+        if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
+    };
 
     const commonIconButtonStyles = {
         padding: 2,

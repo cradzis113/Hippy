@@ -14,8 +14,7 @@ const RecentConversations = forwardRef((props, ref) => {
     const socket = useSocket();
     const { userData } = useAuth();
     const { setBackState } = useSetting();
-
-    const userName = userData.data.user.userName;
+    const userName = userData?.data?.user?.userName || userData?.user?.userName;
     const { searchResult, setCurrentChatUser, } = useData();
 
     const isDesktop = useMediaQuery('(min-width: 926px)');

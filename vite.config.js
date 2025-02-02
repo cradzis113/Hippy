@@ -10,9 +10,6 @@ export default defineConfig({
       name: 'treat-js-files-as-jsx',
       async transform(code, id) {
         if (!id.match(/src\/.*\.js$/)) return null
-
-        // Use the exposed transform from vite, instead of directly
-        // transforming with esbuild
         return transformWithEsbuild(code, id, {
           loader: 'jsx',
           jsx: 'automatic',
@@ -29,5 +26,9 @@ export default defineConfig({
         '.js': 'jsx',
       },
     },
+  },
+  server: {
+    host: '192.168.1.7',
+    port: 5173,
   },
 })

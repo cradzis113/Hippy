@@ -18,7 +18,7 @@ const UserMenuToggle = () => {
   const { logout, userData } = useAuth()
   const { backState, setBackState } = useSetting()
 
-  const userName = userData.data.user.userName
+  const userName = userData?.data?.user?.userName
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -35,9 +35,6 @@ const UserMenuToggle = () => {
   return (
     <>
       <IconButton
-        aria-controls={open ? 'icon-text-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
         onClick={backState ? handleBackStateChange : handleClick}
       >
         {backState ? <ArrowBackIcon /> : <MenuIcon />}
@@ -48,7 +45,6 @@ const UserMenuToggle = () => {
         open={open}
         onClose={handleClose}
         MenuListProps={{
-          'aria-labelledby': 'basic-button',
           sx: {
             '& .MuiMenuItem-root': {
               borderRadius: 2,

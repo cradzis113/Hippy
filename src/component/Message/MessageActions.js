@@ -37,7 +37,7 @@ const MessageActions = ({
 }) => {
     const socket = useSocket();
     const { setActiveSelectedMessage } = useSetting();
-    const { carouselSlides, setSelectedMessages } = useData();
+    const { carouselSlides, setSelectedMessages, currentChatUser } = useData();
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleOpenDialog = () => {
@@ -62,9 +62,9 @@ const MessageActions = ({
 
     const handlePinMessage = () => {
         if (carouselSlides.some(slide => slide.id === item.id)) {
-            socket.current.emit('pinMessage', item, 'unpin');
+            socket.current.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'unpin');
         } else {
-            socket.current.emit('pinMessage', item, 'pin');
+            socket.current.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'pin');
         }
 
         handlePopoverClose();

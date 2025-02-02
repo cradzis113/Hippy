@@ -11,10 +11,10 @@ export const SocketProvider = ({ children }) => {
     const { userData } = useAuth();
     const { userName } = userData?.data?.user || {};
     const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
-    const [hasFocus, setHasFocus] = useState(false);
+    const [hasFocus, setHasFocus] = useState(document.visibilityState === 'visible');
 
     useEffect(() => {
-        const socketInstance = io('http://localhost:3001');
+        const socketInstance = io('http://192.168.1.7:3001');
         socket.current = (socketInstance);
 
         socketInstance.on('connect', () => {
@@ -53,7 +53,9 @@ export const SocketProvider = ({ children }) => {
     useEffect(() => {
         if (!socket) return;
         const status = isVisible && hasFocus ? 'online' : 'offline';
-        socket.current.emit('updateUserStatus', { userName, status, hasFocus });
+        setTimeout(() => {
+            socket.current.emit('updateUserStatus', { userName, status, hasFocus });
+        }, 10);
     }, [isVisible, hasFocus, userName, socket]);
 
     return (

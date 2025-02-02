@@ -12,7 +12,7 @@ const UseAuth = () => {
 
   const sendVerificationCode = async () => {
     try {
-      const response = await fetchAPI('http://localhost:3001/api/getcode', 'POST', { email });
+      const response = await fetchAPI('http://192.168.1.7:3001/api/getcode', 'POST', { email });
       setResponseStatus(response.status);
       setResponseMessage(response.data.message);
     } catch (error) {
@@ -45,12 +45,12 @@ const UseAuth = () => {
 
   const handleCodeSubmission = async (code, email) => {
     try {
-      const response = await fetchAPI('http://localhost:3001/api/auth', 'POST', { code, email }, null, true);
-      if (response.status === 200 || response.status === 201) {
+      const response = await fetchAPI('http://192.168.1.7:3001/api/auth', 'POST', { code, email }, null, true);
+      if (response.status === 200 || response.status === 201 || response.data.message === 'Login successful') {
         login();
+        // setUserData(response.data); // cái này cho khác domain
         window.location.reload();
-        // setUserData(response);
-      }
+      }       
     } catch (error) {
       console.error('Error submitting code:', error.message);
       setInvalidMessage(error.response.data.message);

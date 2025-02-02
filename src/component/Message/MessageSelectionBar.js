@@ -51,19 +51,16 @@ const MessageSelectionBar = ({
           currentUser
         };
       } else if (visibilityOption === 'onlyYou') {
-        if (currentUserRevokedMessages.length > 0 && otherUserMessages.length > 0) {
-          updatedData = {
-            currentUserRevokedMessages: { visibilityOption: 'onlyYou', messages: currentUserRevokedMessages },
-            otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages },
-            currentUser
-          }
-        } else if (currentUserMessages.length > 0 || otherUserMessages.length > 0) {
+        if (currentUserMessages.length > 0 || otherUserMessages.length > 0 || currentUserRevokedMessages.length > 0) {
           updatedData = {
             ...(otherUserMessages.length > 0 && {
               otherUsers: { visibilityOption: 'onlyYou', messages: otherUserMessages }
             }),
             ...(currentUserMessages.length > 0 && {
               currentUserMessages: { visibilityOption: 'onlyYou', messages: currentUserMessages }
+            }),
+            ...(currentUserRevokedMessages.length > 0 && {
+              currentUserRevokedMessages: { visibilityOption: 'onlyYou', messages: currentUserRevokedMessages }
             }),
             currentUser
           };

@@ -41,6 +41,7 @@ const UserProfileHeader = ({ user }) => {
         isActive: false,
         isResultsVisible: false
     });
+    const [userStatus, setUserStatus] = useState(null)
 
     const handleSearch = React.useCallback((searchTerm) => {
         if (searchTerm.trim() === '') {
@@ -85,16 +86,20 @@ const UserProfileHeader = ({ user }) => {
 
     useEffect(() => {
         if (!socket?.current || !user) return;
-
         const handleUserStatusUpdate = (data) => {
-            if (data.userName === user.userName) {
-                //
-            }
+            setUserStatus(data)
         };
 
-        socket.current.on('userStatusUpdated', handleUserStatusUpdate);
-        return () => socket.current.off('userStatusUpdated', handleUserStatusUpdate);
+        socket.current.on('userStatus', handleUserStatusUpdate);
+        return () => socket.current.off('userStatus', handleUserStatusUpdate);
     }, [socket, user]);
+
+    const getStatusMessage = () => {
+        if (!userStatus) return user.lastSeenMessage;
+        return userStatus.userName === user.userName && userStatus.status === 'online'
+            ? userStatus.status
+            : user.lastSeenMessage;
+    }
 
     return (
         <AppBar position="static" elevation={1} sx={{ backgroundColor: 'background.paper' }}>
@@ -112,10 +117,10 @@ const UserProfileHeader = ({ user }) => {
                             </Typography>
                             <Typography
                                 variant="body2"
-                                color={user.status === 'online' ? 'primary' : 'textSecondary'}
+                                color={userStatus?.userName === user.userName && userStatus?.status === 'online' ? 'primary' : 'textSecondary'}
                                 fontWeight={500}
                             >
-                                {user.status === 'online' ? user.status : user.lastSeenMessage}
+                                {getStatusMessage()}
                             </Typography>
                         </Box>
                     ) : (
@@ -277,8 +282,24 @@ const UserProfileHeader = ({ user }) => {
                 </Box>
                 {!searchState.isActive && (
                     <>
-                        {userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && <VerticalCarousel slides={carouselSlides} />}
-                        {userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && carouselSlides?.length > 1 && (
+                        {Boolean(userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser]) ? (
+                            userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && <VerticalCarousel slides={carouselSlides} />
+                        ) : (
+                            carouselSlides.length > 0 &&
+                            (carouselSlides[0].recipientUserName === user?.userName || carouselSlides[0].recipientUserName === currentUser) &&
+                            (carouselSlides[0].senderUserName === user?.userName || carouselSlides[0].senderUserName === currentUser) &&
+                            <VerticalCarousel slides={carouselSlides} />
+                        )}
+                        {Boolean(userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser]) ? (
+                            userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] &&
+                            carouselSlides?.length > 1 &&
+                            <IconButton onClick={() => setPinnedViewActive(true)}>
+                                <PushPinOutlinedIcon />
+                            </IconButton>
+                        ) : (
+                            carouselSlides.length > 1 &&
+                            (carouselSlides[0].recipientUserName === user?.userName || carouselSlides[0].recipientUserName === currentUser) &&
+                            (carouselSlides[0].senderUserName === user?.userName || carouselSlides[0].senderUserName === currentUser) &&
                             <IconButton onClick={() => setPinnedViewActive(true)}>
                                 <PushPinOutlinedIcon />
                             </IconButton>

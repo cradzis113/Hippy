@@ -32,7 +32,6 @@ const ConversationItem = memo(({
     newMessage,
     onClick,
     messageHistory,
-    currentChatUser,
     messageQueueState
 }) => {
     const renderSeenStatus = () => {
@@ -158,9 +157,9 @@ const ConversationList = () => {
         currentChatUser
     } = useData();
 
-    const currentUserName = userData?.data?.user?.userName || '';
-    const initialMessageHistory = userData?.data?.user?.messageHistory || {};
-    const pinnedInfo = userData?.data?.user?.pinnedInfo || {};
+    const currentUserName = userData?.data?.user?.userName || userData?.user?.userName || '';
+    const initialMessageHistory = userData?.data?.user?.messageHistory || userData?.user?.messageHistory || {};
+    const pinnedInfo = userData?.data?.user?.pinnedInfo || userData?.user?.pinnedInfo || {};
 
     const [newMessage, setNewMessage] = useState('');
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
@@ -172,6 +171,7 @@ const ConversationList = () => {
     const handleClick = (userName) => {
         if (!socket) return;
 
+        socket.current.emit('enterChat', { userName, currentUserName })
         socket.current.emit('search', userName, (error, results) => {
             if (error) {
                 console.error('Search error:', error);
