@@ -3,18 +3,22 @@ import ChatHeader from './ChatHeader';
 import Conversation from './ConversationList';
 import RecentConversations from './RecentConversations';
 import MessageList from '../Message/MessageList';
-import { useSetting } from '../../context/SettingContext';
+
 import { Box, Fade } from '@mui/material';
 import { green } from '@mui/material/colors';
-import { useData } from '../../context/DataContext';
-import PinnedMessagesList from '../Pinned/PinnedMessagesList';
+import useSettingStore from '../../stores/settingStore';
+
 import UserProfileHeader from './UserProfileHeader';
+import PinnedMessageItem from '../Pinned/PinnedMessageItem';
+import PinnedMessagesHeader from '../Pinned/PinnedMessagesHeader';
+import UnpinMessageButton from '../Pinned/UnpinMessageButton';
 import _ from 'lodash';
+import useDataStore from '../../stores/dataStore';
 
 const ChatInterface = () => {
-    const { backState } = useSetting();
-    const { currentChatUser } = useData();
-    const { pinnedViewActive } = useSetting();
+    const currentChatUser = useDataStore(state => state.currentChatUser);
+    const backState = useSettingStore(state => state.backState);
+    const pinnedViewActive = useSettingStore(state => state.pinnedViewActive);
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -44,13 +48,19 @@ const ChatInterface = () => {
             >
                 {!_.isEmpty(currentChatUser) > 0 && (
                     <>
-                        {pinnedViewActive ? <PinnedMessagesList /> : (
+                        {pinnedViewActive ? (
+                            <>
+                                <PinnedMessagesHeader />
+                                <PinnedMessageItem />
+                                <UnpinMessageButton />
+
+                            </>
+                        ) : (
                             <>
                                 <UserProfileHeader user={currentChatUser} />
                                 <MessageList user={currentChatUser} />
                             </>
                         )}
-
                     </>
                 )}
             </Box>

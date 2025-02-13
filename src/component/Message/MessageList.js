@@ -1,44 +1,80 @@
 import React, { useEffect, useState, useRef } from 'react';
+import {
+    Close as CloseIcon,
+    Reply as ReplyIcon,
+    RadioButtonUnchecked,
+    RadioButtonChecked,
+    KeyboardDoubleArrowDown as KeyboardDoubleArrowDownIcon
+} from '@mui/icons-material';
+import {
+    Box,
+    Chip,
+    ListItem,
+    ListItemText,
+    List,
+    IconButton,
+    ListItemIcon,
+    Typography,
+    Checkbox
+} from '@mui/material';
+import _ from 'lodash';
+import moment from 'moment';
 import MessageItem from './MessageItem';
 import MessageInput from './MessageInput';
-
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
-import { useData } from '../../context/DataContext';
-import { useSetting } from '../../context/SettingContext';
-
-import moment from 'moment';
-
 import MessageDeletionNotification from './MessageDeletionNotification';
-import useSendMessage from '../../hook/useSendMessage';
+import useMessageStore from '../../stores/messageStore';
 import MessageSelectionBar from './MessageSelectionBar';
-
-import CloseIcon from '@mui/icons-material/Close';
-import ReplyIcon from '@mui/icons-material/Reply';
-import { RadioButtonUnchecked, RadioButtonChecked } from '@mui/icons-material';
-import { Box, Chip, ListItem, ListItemText, List, IconButton, ListItemIcon, Typography, Checkbox } from '@mui/material';
-import _ from 'lodash';
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const MessageList = ({ user }) => {
-    const socket = useSocket();
-    const { userData } = useAuth();
-    const { userReplied, setUserReplied, messageReplied, setMessageReplied } = useSendMessage();
+    const socket = useSocketStore(state => state.socket)
+    const userName = authStore(state => state.userName);
+    const setMessageReplied = useMessageStore(state => state.setMessageReplied);
+    const setUserReplied = useMessageStore(state => state.setUserReplied);
+    const userReplied = useMessageStore(state => state.userReplied);
+    const messageReplied = useMessageStore(state => state.messageReplied);
 
+    const currentUser = userName;
     const [messages, setMessages] = useState([]);
-    const currentUser = userData?.data?.user?.userName;
     const [currentUserMessageHistory, setCurrentUserMessageHistory] = useState([]);
     const currentUserMessageHistoryLength = useRef(currentUserMessageHistory.length);
 
-    const { activeSelectedMessage, fi, setFi } = useSetting();
-    const { selectedMessages, setSelectedMessages, focusMessage, storedMessages, currentChatUser } = useData();
+    const activeSelectedMessage = useSettingStore(state => state.activeSelectedMessage);
+    const isFirstLoad = useSettingStore(state => state.isFirstLoad);
+    const setIsFirstLoad = useSettingStore(state => state.setIsFirstLoad);
+    const {
+        selectedMessages,
+        setSelectedMessages,
+        focusMessage,
+        storedMessages,
+        currentChatUser,
+        setFocusMessage
+    } = useDataStore(useShallow(state => ({
+        selectedMessages: state.selectedMessages,
+        setSelectedMessages: state.setSelectedMessages,
+        focusMessage: state.focusMessage,
+        storedMessages: state.storedMessages,
+        currentChatUser: state.currentChatUser,
+        setFocusMessage: state.setFocusMessage
+    })));
 
     const messagesEndRef = useRef(null);
     const [isExpanding, setIsExpanding] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    };
+
+    const handleScroll = (e) => {
+        const scrollTop = Math.abs(e.target.scrollTop);
+        setShowScrollButton(scrollTop > 100);
     };
 
     useEffect(() => {
@@ -68,14 +104,13 @@ const MessageList = ({ user }) => {
     }, [user, currentUser]);
 
     useEffect(() => {
-        if (!socket.current) return;
+        if (!socket) return;
         const handleMessageSent = (data) => {
             if (!data) {
                 return setMessages([]);
             }
 
             setCurrentUserMessageHistory(prevMessages => {
-                console.log(data)
                 if (data.revoked) {
                     const messageIndex = _.findIndex(prevMessages, msg => msg.id === data.id);
                     if (messageIndex !== -1) {
@@ -94,11 +129,11 @@ const MessageList = ({ user }) => {
             });
         };
 
-        socket.current.on('messageSent', handleMessageSent);
+        socket.on('messageSent', handleMessageSent);
         return () => {
-            socket.current.off('messageSent', handleMessageSent);
+            socket.off('messageSent', handleMessageSent);
         };
-    }, [socket.current]);
+    }, [socket]);
 
     useEffect(() => {
         if (currentUserMessageHistory.length === currentUserMessageHistoryLength) return;
@@ -108,7 +143,7 @@ const MessageList = ({ user }) => {
             time: _.minBy(group, 'time').time,
             messages: group,
         }));
-        // console.log(currentUserMessageHistory)
+
         setMessages(formattedMessages);
     }, [currentUserMessageHistoryLength, currentUserMessageHistory]);
 
@@ -123,6 +158,7 @@ const MessageList = ({ user }) => {
 
             const clearTimer = setTimeout(() => {
                 setHighlightedMessageId(null);
+                setFocusMessage(null);
             }, 2300);
 
             return () => {
@@ -133,7 +169,7 @@ const MessageList = ({ user }) => {
     }, [focusMessage]);
 
     useEffect(() => {
-        if (messages[messages.length - 1]?.messages && _.size(storedMessages[currentChatUser.userName]) > 0 && !fi) {
+        if (messages[messages.length - 1]?.messages && _.size(storedMessages[currentChatUser.userName]) > 0 && !isFirstLoad) {
             const newMessages = _.differenceBy(storedMessages[currentChatUser.userName], messages[messages.length - 1].messages, 'id');
             if (newMessages.length > 0) {
                 const updatedMessages = [...messages];
@@ -143,11 +179,11 @@ const MessageList = ({ user }) => {
                     messages: [...updatedMessages[updatedMessages.length - 1].messages, ...newMessages]
                 };
 
-                setFi(true)
+                setIsFirstLoad(true)
                 setMessages(updatedMessages);
             }
         }
-    }, [messages, currentChatUser, storedMessages, fi]);
+    }, [messages, currentChatUser, storedMessages, isFirstLoad]);
 
     const handleCloseReliedMessage = () => {
         setMessageReplied(null);
@@ -163,7 +199,6 @@ const MessageList = ({ user }) => {
 
     const handleRadioChange = (event, message) => {
         const isSelected = selectedMessages.some(msg => msg.id === message.id);
-
         if (isSelected) {
             setSelectedMessages(selectedMessages.filter(msg => msg.id !== message.id));
         } else {
@@ -194,6 +229,7 @@ const MessageList = ({ user }) => {
                     '&::-webkit-scrollbar-thumb': { backgroundColor: '#888', borderRadius: '10px' },
                     '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#555' },
                 }}
+                onScroll={handleScroll}
             >
                 <Box sx={{
                     display: 'flex',
@@ -317,6 +353,21 @@ const MessageList = ({ user }) => {
                             </React.Fragment>
                         );
                     })}
+                    {showScrollButton && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'sticky', bottom: 3 }}>
+                            <IconButton
+                                onClick={scrollToBottom}
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    backgroundColor: 'white',
+                                    boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                                    '&:hover': { backgroundColor: '#f5f5f5' }
+                                }}>
+                                <KeyboardDoubleArrowDownIcon />
+                            </IconButton>
+                        </Box>
+                    )}
                     <Box ref={messagesEndRef} />
                 </Box>
             </Box>
@@ -379,7 +430,8 @@ const MessageList = ({ user }) => {
                     />
                 ) : (
                     <MessageInput
-                        user={user}
+                        userTarget={user}
+                        currentUser={currentUser}
                         showEmojiPicker={showEmojiPicker}
                         setShowEmojiPicker={setShowEmojiPicker}
                     />

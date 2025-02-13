@@ -1,35 +1,47 @@
 import React, { useState } from 'react';
-import { useSetting } from '../../context/SettingContext';
 import { Menu, MenuItem, IconButton, ListItemIcon, ListItemText } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import InboxIcon from '@mui/icons-material/Inbox';
-import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import LogoutIcon from '@mui/icons-material/Logout';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
+import { Menu as MenuIcon, Inbox as InboxIcon, PermIdentityOutlined as PermIdentityOutlinedIcon, SettingsOutlined as SettingsOutlinedIcon, ArrowBack as ArrowBackIcon, Logout as LogoutIcon } from '@mui/icons-material';
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
+import fetchAPI from '../../utils/FetchApi';
 
 const UserMenuToggle = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const socket = useSocket()
-  const { logout, userData } = useAuth()
-  const { backState, setBackState } = useSetting()
+  const socket = useSocketStore(state => state.socket)
+  const setIsAuthenticated = authStore(state => state.setIsAuthenticated)
+  const backState = useSettingStore(state => state.backState)
+  const setBackState = useSettingStore(state => state.setBackState)
+  const userName = authStore(state => state.userName)
 
-  const userName = userData?.data?.user?.userName
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleBackStateChange = () => {
     setBackState(false)
-    socket.current.emit('fetchUnseenMessages', userName);
+    socket.emit('fetchUnseenMessages', userName);
   }
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+  const API_BASE = window.location.protocol === "https:"
+    ? import.meta.env.VITE_API_URL_TUNNEL
+    : `http://${window.location.hostname}:3001`;
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetchAPI(API_BASE + '/api/clear-cookie', 'POST', null, null, true);
+      if (response.status === 204) {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -80,7 +92,8 @@ const UserMenuToggle = () => {
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </MenuItem>
-        <MenuItem onClick={() => logout()}>
+
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>

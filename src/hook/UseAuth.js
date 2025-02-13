@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import fetchAPI from '../utils/FetchApi';
+import useAuthStore from '../stores/authStore';
 
 const UseAuth = () => {
   const [email, setEmail] = useState('');
@@ -8,11 +8,15 @@ const UseAuth = () => {
   const [responseStatus, setResponseStatus] = useState(null);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [invalidMessage, setInvalidMessage] = useState('')
-  const { login, setUserData } = useAuth()
+  const setIsAuthenticated = useAuthStore(state => state.setIsAuthenticated)
 
   const sendVerificationCode = async () => {
+    const API_BASE = window.location.protocol === "https:"
+      ? import.meta.env.VITE_API_URL_TUNNEL
+      : `http://${window.location.hostname}:3001`;
+
     try {
-      const response = await fetchAPI('http://192.168.1.7:3001/api/getcode', 'POST', { email });
+      const response = await fetchAPI(`${API_BASE}/api/getcode`, 'POST', { email });
       setResponseStatus(response.status);
       setResponseMessage(response.data.message);
     } catch (error) {
@@ -44,13 +48,21 @@ const UseAuth = () => {
   };
 
   const handleCodeSubmission = async (code, email) => {
+    const API_BASE = window.location.protocol === "https:"
+      ? import.meta.env.VITE_API_URL_TUNNEL
+      : `http://${window.location.hostname}:3001`;
+
+
     try {
-      const response = await fetchAPI('http://192.168.1.7:3001/api/auth', 'POST', { code, email }, null, true);
+      const response = await fetchAPI(`${API_BASE}/api/auth`, 'POST', { code, email }, null, true);
       if (response.status === 200 || response.status === 201 || response.data.message === 'Login successful') {
-        login();
+        console.log(response.data);
+        localStorage.setItem('token', response.data.token);
+        setIsAuthenticated(true);
         // setUserData(response.data); // cái này cho khác domain
         window.location.reload();
-      }       
+
+      }
     } catch (error) {
       console.error('Error submitting code:', error.message);
       setInvalidMessage(error.response.data.message);

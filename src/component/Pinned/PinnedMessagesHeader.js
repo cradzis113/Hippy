@@ -1,25 +1,27 @@
 import { AppBar, IconButton, Toolbar, Typography } from "@mui/material";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useAuth } from "../../context/AuthContext";
-import { useData } from "../../context/DataContext";
-import { useSetting } from "../../context/SettingContext";
-import { useSocket } from "../../context/SocketContext";
+import useSettingStore from '../../stores/settingStore';
+import useSocketStore from '../../stores/socketStore';
+import authStore from '../../stores/authStore';
+import useDataStore from '../../stores/dataStore';
 
 const PinnedMessagesHeader = () => {
-    const socket = useSocket()
-    const { userData } = useAuth();
-    const { currentChatUser, carouselSlides } = useData();
-    const { setPinnedViewActive, setFi } = useSetting();
+    const socket = useSocketStore(state => state.socket)
+    const userData = authStore(state => state.userData)
+    const currentChatUser = useDataStore(state => state.currentChatUser);
+    const carouselSlides = useDataStore(state => state.carouselSlides);
+    const setPinnedViewActive = useSettingStore(state => state.setPinnedViewActive);
+    const setIsFirstLoad = useSettingStore(state => state.setIsFirstLoad);
+    const userName = authStore(state => state.userName);
 
-    const userName = userData.data.user.userName;
     const currentChatUserName = currentChatUser?.userName;
     const pinnedMessagesInfo = userData?.data?.user?.pinnedInfo;
     const pinnedMessagesCount = pinnedMessagesInfo?.[currentChatUserName]?.length || carouselSlides.length;
 
     const handleBackClick = () => {
-        setFi(false)
+        setIsFirstLoad(false)
         setPinnedViewActive(false)
-        socket.current.emit('fetchUnseenMessages', userName);
+        socket.emit('fetchUnseenMessages', userName);
     }
 
     return (

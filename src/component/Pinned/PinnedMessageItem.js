@@ -1,10 +1,10 @@
-import { Box, Chip, IconButton, Popper, Typography } from "@mui/material";
-import { useAuth } from "../../context/AuthContext";
-import { useData } from "../../context/DataContext";
-import { green } from "@mui/material/colors";
 import { useEffect, useState, useMemo } from "react";
+import { Box, Chip, IconButton, Popper, Typography } from "@mui/material";
 import ThreeSixtyOutlinedIcon from '@mui/icons-material/ThreeSixtyOutlined';
-import { useSetting } from "../../context/SettingContext";
+import { green } from "@mui/material/colors";
+import authStore from '../../stores/authStore';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
 import _ from "lodash";
 import moment from "moment";
 
@@ -18,16 +18,19 @@ const groupMessagesByDate = (messages) => {
 };
 
 const PinnedMessageItem = () => {
-    const { userData } = useAuth();
-    const { setPinnedViewActive } = useSetting();
-    const { currentChatUser, carouselSlides, setFocusMessage } = useData();
+    const userData = authStore(state => state.userData);
+    const userName = authStore(state => state.userName);
+    const setPinnedViewActive = useSettingStore(state => state.setPinnedViewActive);
+    const currentChatUser = useDataStore(state => state.currentChatUser);
+    const carouselSlides = useDataStore(state => state.carouselSlides);
+    const setFocusMessage = useDataStore(state => state.setFocusMessage);
 
     const pinnedMessages = useMemo(
         () => userData?.data?.user?.pinnedInfo || {},
         [userData]
     );
     const currentChatUserName = currentChatUser?.userName;
-    const currentUser = userData?.data?.user?.userName;
+    const currentUser = userName;
 
     const [messages, setMessages] = useState([]);
     const [hoveredMessageId, setHoveredMessageId] = useState(null);

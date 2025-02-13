@@ -1,13 +1,22 @@
 import AuthPage from "./page/AuthPage";
 import ChatInterface from "./component/Chat/ChatInterface";
-import { useAuth } from "./context/AuthContext";
-import { SocketProvider } from "./context/SocketContext";
-import { SettingProvider } from "./context/SettingContext";
 import { Container, GlobalStyles } from "@mui/material";
-import { DataProvider } from "./context/DataContext";
+import authStore from "./stores/authStore";
+import { useShallow } from "zustand/react/shallow";
+import socketService from "./services/socketService";
+import userSessionService from "./services/userSessionService";
 
 function App() {
-  const { loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = authStore(useShallow(state => ({
+    setIsAuthenticated: state.setIsAuthenticated,
+    setUserData: state.setUserData,
+    setLoading: state.setLoading,
+    loading: state.loading,
+    isAuthenticated: state.isAuthenticated
+  })));
+
+  userSessionService();
+  socketService();
 
   return (
     <>
@@ -32,13 +41,7 @@ function App() {
       {loading ? (
         <></>
       ) : isAuthenticated ? (
-        <DataProvider>
-          <SocketProvider>
-            <SettingProvider>
-              <ChatInterface />
-            </SettingProvider>
-          </SocketProvider>
-        </DataProvider>
+        <ChatInterface />
       ) : (
         <Container maxWidth='xs'>
           <AuthPage />

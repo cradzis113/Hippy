@@ -1,24 +1,20 @@
 import React from 'react';
 import { Box, TextField, IconButton, InputAdornment } from '@mui/material';
-import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
-import SendIcon from '@mui/icons-material/Send';
-import MicIcon from '@mui/icons-material/Mic';
+import { EmojiEmotions as EmojiEmotionsIcon, Send as SendIcon, Mic as MicIcon } from '@mui/icons-material';
 import EmojiPicker from 'emoji-picker-react';
 import useEmojiPicker from '../../hook/useEmojiPicker';
-import useSendMessage from '../../hook/useSendMessage';
+import useMessageStore from '../../stores/messageStore';
+import useSocketStore from '../../stores/socketStore';
 
-const MessageInput = ({ user, showEmojiPicker, setShowEmojiPicker }) => {
+const MessageInput = ({ userTarget, currentUser, showEmojiPicker, setShowEmojiPicker }) => {
     const { emojiPickerRef, handleEmojiClick } = useEmojiPicker();
-    const {
-        message,
-        setMessage,
-        sendMessage,
-        userReplied,
-        messageReplied,
-    } = useSendMessage();
+    const socket = useSocketStore(state => state.socket);
+    const message = useMessageStore(state => state.message);
+    const setMessage = useMessageStore(state => state.setMessage);
+    const sendMessage = useMessageStore(state => state.sendMessage);
 
     const handleSendMessage = () => {
-        if (message.trim()) sendMessage(user.userName, messageReplied, userReplied);
+        if (message.trim()) sendMessage(userTarget.userName, currentUser, socket);
     };
 
     const commonIconButtonStyles = {
@@ -78,7 +74,7 @@ const MessageInput = ({ user, showEmojiPicker, setShowEmojiPicker }) => {
                         startAdornment: (
                             <InputAdornment position="start">
                                 <IconButton onClick={() => setShowEmojiPicker((prev) => !prev)}>
-                                    <EmojiEmotionsOutlinedIcon />
+                                    <EmojiEmotionsIcon />
                                 </IconButton>
                             </InputAdornment>
                         ),

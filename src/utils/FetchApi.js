@@ -6,7 +6,7 @@ const fetchAPI = async (url, method = 'GET', data = null, headers = {}, withCred
             url,
             method,
             headers,
-            withCredentials
+            withCredentials,
         };
 
         if (data) {

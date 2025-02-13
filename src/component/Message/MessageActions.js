@@ -12,16 +12,21 @@ import {
     ListItemIcon,
     ListItemText,
 } from '@mui/material';
-import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+    ReplyOutlined as ReplyOutlinedIcon,
+    MoreVert as MoreVertIcon,
+    PushPin as PushPinIcon,
+    DeleteOutline as DeleteOutlineIcon,
+    Forward as ForwardIcon,
+    CheckCircleOutline as CheckCircleOutlineIcon,
+    SentimentSatisfiedAltOutlined as SentimentSatisfiedAltOutlinedIcon
+} from '@mui/icons-material';
 import MessageRecallDialog from './MessageRecallDialog';
-import { useSocket } from '../../context/SocketContext';
-import { useData } from '../../context/DataContext';
-import PushPinIcon from '@mui/icons-material/PushPin';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ForwardIcon from '@mui/icons-material/Forward';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useSetting } from '../../context/SettingContext';
+import useSettingStore from '../../stores/settingStore';
+import useSocketStore from '../../stores/socketStore';
+import useDataStore from '../../stores/dataStore';
+import Picker from 'emoji-picker-react';
+import EmojiPicker from '@emoji-mart/react';
 
 const MessageActions = ({
     item,
@@ -35,9 +40,13 @@ const MessageActions = ({
     handlePopoverClose,
     handleRetrieveMessages,
 }) => {
-    const socket = useSocket();
-    const { setActiveSelectedMessage } = useSetting();
-    const { carouselSlides, setSelectedMessages, currentChatUser } = useData();
+
+    const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
+    const socket = useSocketStore(state => state.socket)
+    const setActiveSelectedMessage = useSettingStore(state => state.setActiveSelectedMessage);
+    const carouselSlides = useDataStore(state => state.carouselSlides);
+    const setSelectedMessages = useDataStore(state => state.setSelectedMessages);
+    const currentChatUser = useDataStore(state => state.currentChatUser);
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleOpenDialog = () => {
@@ -62,9 +71,9 @@ const MessageActions = ({
 
     const handlePinMessage = () => {
         if (carouselSlides.some(slide => slide.id === item.id)) {
-            socket.current.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'unpin');
+            socket.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'unpin');
         } else {
-            socket.current.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'pin');
+            socket.emit('pinMessage', { ...item, currentChatUser: currentChatUser.userName }, 'pin');
         }
 
         handlePopoverClose();
@@ -91,11 +100,17 @@ const MessageActions = ({
                             <ReplyOutlinedIcon />
                         </IconButton>
                     </Tooltip>
+                    <Tooltip title="Trả lời" placement="top">
+                        <IconButton onClick={(e) => setOpenEmojiPicker(e.currentTarget)}>
+                            <SentimentSatisfiedAltOutlinedIcon />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Xem thêm" placement="top">
                         <IconButton onClick={handleDotAnchor}>
                             <MoreVertIcon />
                         </IconButton>
                     </Tooltip>
+
                     <Popover
                         open={Boolean(dotAnchor)}
                         anchorEl={dotAnchor}
@@ -147,6 +162,41 @@ const MessageActions = ({
                         </List>
                     </Popover>
                 </Box>
+            </Popper>
+            <Popper
+                open={Boolean(openEmojiPicker)}
+                onClose={() => setOpenEmojiPicker(null)}
+                anchorEl={openEmojiPicker}
+                placement="top-start"
+                disablePortal={false}
+                style={{
+                    zIndex: 9999,
+                    position: 'absolute'
+                }}
+                modifiers={[
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [0, 10],
+                        },
+                    },
+                    {
+                        name: 'preventOverflow',
+                        options: {
+                            boundary: window,
+                            altAxis: true,
+                            altBoundary: true,
+                        },
+                    },
+                    {
+                        name: 'flip',
+                        options: {
+                            fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'],
+                        },
+                    }
+                ]}
+            >
+               // tôi cần tích hợp reaction trong message
             </Popper>
             <MessageRecallDialog
                 open={dialogOpen}

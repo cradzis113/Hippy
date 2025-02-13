@@ -1,37 +1,36 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { grey, blue } from '@mui/material/colors';
-import { Box, TextField, InputAdornment } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
-import CloseSharpIcon from '@mui/icons-material/CloseSharp';
-import SearchIcon from '@mui/icons-material/Search';
+import { Box, TextField, InputAdornment, CircularProgress } from '@mui/material';
+import { CloseSharp, Search } from '@mui/icons-material';
 import useDebounce from '../../utils/debounce';
-import { useSetting } from '../../context/SettingContext';
-import { useSocket } from '../../context/SocketContext';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
 
 const ChatSearch = () => {
     const [isFocused, setIsFocused] = useState(false);
     const [query, setQuery] = useState('');
 
-    const socket = useSocket();
-    const { userData } = useAuth();
-    const { setBackState, backState } = useSetting();
-    const { setSearchResult } = useData()
-
+    const socket = useSocketStore(state => state.socket);
+    const backState = useSettingStore(state => state.backState);
+    const setBackState = useSettingStore(state => state.setBackState);
+    const setSearchResult = useDataStore(state => state.setSearchResult);
+    const userName = authStore(state => state.userName);
+    
     const handleSearch = useCallback((debouncedQuery) => {
-        if (socket) {
-            socket.current.emit('search', debouncedQuery, (error, results) => {
-                if (error) {
-                    console.error('Search error:', error);
-                } else {
-                    const userName = userData.data.user.userName
-                    const filteredResults = results.filter(item => item.userName !== userName);
-                    setSearchResult(filteredResults);
-                }
-            });
-        }
-    }, [socket, userData, setSearchResult]);
+        if (!socket || !debouncedQuery) return;
+        
+        const escapedQuery = debouncedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        socket.emit('search', escapedQuery, (error, results) => {
+            if (error) {
+                console.error('Search error:', error);
+            } else {
+                const filteredResults = results.filter(item => item.userName !== userName);
+                setSearchResult(filteredResults);
+            }
+        });
+    }, [socket, setSearchResult, userName]);
 
     const [setDebouncedQuery, isLoading] = useDebounce(handleSearch, 300);
 
@@ -105,13 +104,13 @@ const ChatSearch = () => {
                                 {isLoading ? (
                                     <CircularProgress size={20} />
                                 ) : (
-                                    <SearchIcon sx={{ color: isFocused ? blue[500] : grey[500] }} />
+                                    <Search sx={{ color: isFocused ? blue[500] : grey[500] }} />
                                 )}
                             </InputAdornment>
                         ),
                         endAdornment: (
                             <InputAdornment position='end' sx={{ visibility: query ? 'visible' : 'hidden' }}>
-                                <CloseSharpIcon onClick={handleClearInput} sx={{ cursor: 'pointer' }} />
+                                <CloseSharp onClick={handleClearInput} sx={{ cursor: 'pointer' }} />
                             </InputAdornment>
                         )
                     }

@@ -8,13 +8,15 @@ import {
   Box,
   ButtonBase,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import {
+  Close as CloseIcon,
+  SwapHorizOutlined as SwapHorizOutlinedIcon,
+  DeleteOutline as DeleteOutlineIcon
+} from '@mui/icons-material';
 import MessageRecallDialog from './MessageRecallDialog';
-import { useSocket } from '../../context/SocketContext';
-import { useSetting } from '../../context/SettingContext';
-import { useData } from '../../context/DataContext';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
 
 const MessageSelectionBar = ({
   selectedCount,
@@ -22,9 +24,9 @@ const MessageSelectionBar = ({
   item,
   currentUser
 }) => {
-  const socket = useSocket();
-  const { setSelectedMessages } = useData();
-  const { setActiveSelectedMessage } = useSetting();
+  const socket = useSocketStore(state => state.socket)
+  const setSelectedMessages = useDataStore(state => state.setSelectedMessages);
+  const setActiveSelectedMessage = useSettingStore(state => state.setActiveSelectedMessage);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleRetrieveMessages = (messageData, visibilityOption) => {
@@ -69,7 +71,7 @@ const MessageSelectionBar = ({
     }
     setSelectedMessages([]);
     setActiveSelectedMessage(false);
-    socket.current.emit('deleteMessage', updatedData);
+    socket.emit('deleteMessage', updatedData);
   };
 
   const handleOpenDialog = () => {

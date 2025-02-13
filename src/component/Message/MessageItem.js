@@ -4,8 +4,8 @@ import { green } from '@mui/material/colors';
 import MessageRevoked from './MessageRevoked';
 import MessageContent from './MessageContent';
 import MessageActions from './MessageActions';
-import { useSocket } from '../../context/SocketContext';
-import { useSetting } from '../../context/SettingContext';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
 
 const MessageItem = ({
     item,
@@ -13,11 +13,11 @@ const MessageItem = ({
     setUserReplied,
     setMessageReplied
 }) => {
-    const socket = useSocket();
+    const socket = useSocketStore(state => state.socket)
     const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
     const [currentPopoverAnchorEl, setCurrentPopoverAnchorEl] = useState(null);
     const [dotAnchor, setDotAnchor] = useState(null);
-    const { activeSelectedMessage } = useSetting();
+    const activeSelectedMessage = useSettingStore(state => state.activeSelectedMessage);
 
     const handlePopoverOpen = (element, index) => {
         setPopoverAnchorEl(index);
@@ -26,7 +26,7 @@ const MessageItem = ({
 
     const handleRetrieveMessages = (messageData, visibilityOption) => {
         const updatedData = { ...messageData, currentUser, visibilityOption };
-        socket.current.emit('deleteMessage', updatedData);
+        socket.emit('deleteMessage', updatedData);
         handlePopoverClose();
     };
 

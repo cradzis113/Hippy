@@ -15,25 +15,28 @@ import {
     ListItemText,
     ClickAwayListener,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import CallIcon from '@mui/icons-material/Call';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CloseIcon from '@mui/icons-material/Close';
+import {
+    Search as SearchIcon,
+    Call as CallIcon,
+    MoreVert as MoreVertIcon,
+    Close as CloseIcon,
+    PushPinOutlined as PushPinOutlinedIcon
+} from '@mui/icons-material';
 import useDebounce from '../../utils/debounce';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
-import { useSocket } from '../../context/SocketContext';
 import VerticalCarousel from './VerticalCarousel';
-import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
-import { useSetting } from '../../context/SettingContext';
+import useSettingStore from '../../stores/settingStore';
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useDataStore from '../../stores/dataStore';
 
 const UserProfileHeader = ({ user }) => {
-    const socket = useSocket();
-    const { userData } = useAuth();
-    const { carouselSlides } = useData();
-    const { setPinnedViewActive } = useSetting();
-
-    const currentUser = userData?.data?.user?.userName;
+    const socket = useSocketStore(state => state.socket)
+    const userData = authStore(state => state.userData)
+    const carouselSlides = useDataStore(state => state.carouselSlides);
+    const setPinnedViewActive = useSettingStore(state => state.setPinnedViewActive);
+    const userName = authStore(state => state.userName);
+    
+    const currentUser = userName;
     const searchInputRef = useRef(null);
     const [searchState, setSearchState] = useState({
         query: '',
@@ -85,13 +88,13 @@ const UserProfileHeader = ({ user }) => {
     };
 
     useEffect(() => {
-        if (!socket?.current || !user) return;
+        if (!socket || !user) return;
         const handleUserStatusUpdate = (data) => {
             setUserStatus(data)
         };
 
-        socket.current.on('userStatus', handleUserStatusUpdate);
-        return () => socket.current.off('userStatus', handleUserStatusUpdate);
+        socket.on('userStatus', handleUserStatusUpdate);
+        return () => socket.off('userStatus', handleUserStatusUpdate);
     }, [socket, user]);
 
     const getStatusMessage = () => {

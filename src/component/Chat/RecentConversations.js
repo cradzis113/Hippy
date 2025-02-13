@@ -1,21 +1,20 @@
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useRef, useState } from 'react';
 import { Tabs, Tab, Box, Avatar, Typography, useMediaQuery, Divider } from '@mui/material';
-import { useData } from '../../context/DataContext';
-import { useSetting } from '../../context/SettingContext';
-import { useSocket } from '../../context/SocketContext';
-import { useAuth } from '../../context/AuthContext';
-
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
 const tabLabels = ['Chats', 'Teen Chat', 'Channels', 'Channels', 'Apps', 'Media'];
 
 const RecentConversations = forwardRef((props, ref) => {
     const containerRef = useRef(null);
     const [value, setValue] = useState(0);
-
-    const socket = useSocket();
-    const { userData } = useAuth();
-    const { setBackState } = useSetting();
-    const userName = userData?.data?.user?.userName || userData?.user?.userName;
-    const { searchResult, setCurrentChatUser, } = useData();
+    
+    const userName = authStore(state => state.userName);
+    const socket = useSocketStore(state => state.socket);
+    const setBackState = useSettingStore(state => state.setBackState);
+    const searchResult = useDataStore(state => state.searchResult);
+    const setCurrentChatUser = useDataStore(state => state.setCurrentChatUser);
 
     const isDesktop = useMediaQuery('(min-width: 926px)');
 
@@ -26,16 +25,16 @@ const RecentConversations = forwardRef((props, ref) => {
         setBackState(false);
         setCurrentChatUser(user);
 
-        if (socket?.current) {
+        if (socket) {
             const chatEventData = {
                 recipientUserName: user.userName,
                 recipientSocketId: user.socketId,
                 userName: userName,
-                socketId: socket.current.id,
+                socketId: socket.id,
                 type: 'chatRequest'
             };
 
-            socket.current.emit('chatEvent', chatEventData);
+            socket.emit('chatEvent', chatEventData);
         }
     };
 

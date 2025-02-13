@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useMemo, memo } from 'react';
 import { Badge, Box, List, ListItem, ListItemAvatar, ListItemText, Typography } from '@mui/material';
 import { grey } from '@mui/material/colors';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
-import { useSocket } from '../../context/SocketContext';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import BadgeAvatars from './BadgeAvatars';
 import _ from 'lodash';
+import authStore from '../../stores/authStore';
+import useSocketStore from '../../stores/socketStore';
+import useDataStore from '../../stores/dataStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -146,8 +147,11 @@ const ConversationItem = memo(({
 });
 
 const ConversationList = () => {
-    const socket = useSocket();
-    const { userData, setUserData } = useAuth();
+    const socket = useSocketStore(state => state.socket);
+    const userData = authStore(state => state.userData)
+    const setUserData = authStore(state => state.setUserData)
+    const userName = authStore(state => state.userName);
+    
     const {
         setCurrentChatUser,
         setCarouselSlides,
@@ -155,11 +159,18 @@ const ConversationList = () => {
         storedMessages,
         setStoredMessages,
         currentChatUser
-    } = useData();
+    } = useDataStore(useShallow(state => ({
+        setCurrentChatUser: state.setCurrentChatUser,
+        setCarouselSlides: state.setCarouselSlides,
+        carouselSlides: state.carouselSlides,
+        storedMessages: state.storedMessages,
+        setStoredMessages: state.setStoredMessages,
+        currentChatUser: state.currentChatUser
+    })));
 
-    const currentUserName = userData?.data?.user?.userName || userData?.user?.userName || '';
-    const initialMessageHistory = userData?.data?.user?.messageHistory || userData?.user?.messageHistory || {};
-    const pinnedInfo = userData?.data?.user?.pinnedInfo || userData?.user?.pinnedInfo || {};
+    const currentUserName = userName;
+    const initialMessageHistory = userData?.data?.user?.messageHistory || {};
+    const pinnedInfo = userData?.data?.user?.pinnedInfo || {};
 
     const [newMessage, setNewMessage] = useState('');
     const [chatMessageHistory, setChatMessageHistory] = useState(initialMessageHistory);
@@ -171,8 +182,8 @@ const ConversationList = () => {
     const handleClick = (userName) => {
         if (!socket) return;
 
-        socket.current.emit('enterChat', { userName, currentUserName })
-        socket.current.emit('search', userName, (error, results) => {
+        socket.emit('enterChat', { userName, currentUserName })
+        socket.emit('search', userName, (error, results) => {
             if (error) {
                 console.error('Search error:', error);
                 return;
@@ -180,11 +191,11 @@ const ConversationList = () => {
 
             setUserTarget(results[0].userName);
             setCurrentChatUser(results[0]);
-            socket.current.emit('chatEvent', {
+            socket.emit('chatEvent', {
                 recipientUserName: results[0].userName,
                 recipientSocketId: results[0].socketId,
                 userName: currentUserName,
-                socketId: socket.current.id,
+                socketId: socket.id,
                 type: 'chatRequest'
             });
         });
@@ -267,7 +278,7 @@ const ConversationList = () => {
     };
 
     useEffect(() => {
-        if (!socket.current || !userData?.data?.user) return;
+        if (!socket || !userData?.data?.user) return;
         const handlers = {
             notification: setNewMessage,
             addMessagesToQueue: (newMessages) => {
@@ -359,24 +370,24 @@ const ConversationList = () => {
             }
         };
 
-        socket.current.on("connect", () => {
-            socket.current.emit('chatEvent', {
-                socketId: socket.current.id,
+        socket.on("connect", () => {
+            socket.emit('chatEvent', {
+                socketId: socket.id,
                 userName: currentUserName,
                 type: 'register'
             });
         });
 
         Object.entries(handlers).forEach(([event, handler]) => {
-            socket.current.on(event, handler);
+            socket.on(event, handler);
         });
 
         return () => {
             Object.keys(handlers).forEach(event => {
-                socket.current.off(event);
+                socket.off(event);
             });
         };
-    }, [socket.current, messageQueue]);
+    }, [socket, messageQueue]);
 
     useEffect(() => {
         const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {

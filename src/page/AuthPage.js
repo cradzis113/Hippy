@@ -70,7 +70,7 @@ const AuthPage = () => {
               alt='Telegram Logo'
             />
             <Typography variant='h4' sx={{ mt: 5, fontWeight: 'bold' }}>
-              Sign in to Telegram
+              Sign in to Hippy
             </Typography>
             <Typography variant='body1' textAlign='center' mt={1.5}>
               Please confirm your country code <br />

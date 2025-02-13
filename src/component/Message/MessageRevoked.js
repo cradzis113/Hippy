@@ -1,10 +1,9 @@
 import { Box, Typography, Popper, IconButton } from '@mui/material';
+import { Delete as DeleteIcon, CheckCircleOutline as CheckCircleOutlineIcon } from '@mui/icons-material';
 import { green } from '@mui/material/colors';
-import DeleteIcon from '@mui/icons-material/Delete';
 import MessageTooltip from './MessageTooltip';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useData } from '../../context/DataContext';
-import { useSetting } from '../../context/SettingContext';
+import useSettingStore from '../../stores/settingStore';
+import useDataStore from '../../stores/dataStore';
 
 const MessageRevoked = ({
     item,
@@ -16,15 +15,15 @@ const MessageRevoked = ({
     handlePopoverClose,
     handleRetrieveMessages
 }) => {
-    const { setSelectedMessages } = useData();
-    const { setActiveSelectedMessage } = useSetting();
+    const setSelectedMessages = useDataStore(state => state.setSelectedMessages);
+    const setActiveSelectedMessage = useSettingStore(state => state.setActiveSelectedMessage);
 
     const handleSelectMessage = () => {
         handlePopoverClose();
         setActiveSelectedMessage(true);
         setSelectedMessages(prev => [...prev, item]);
     };
-
+    
     return (
         <Box
             sx={{
