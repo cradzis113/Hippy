@@ -5,7 +5,6 @@ import authStore from "./stores/authStore";
 import { useShallow } from "zustand/react/shallow";
 import socketService from "./services/socketService";
 import userSessionService from "./services/userSessionService";
-
 function App() {
   const { loading, isAuthenticated } = authStore(useShallow(state => ({
     setIsAuthenticated: state.setIsAuthenticated,
@@ -14,7 +13,7 @@ function App() {
     loading: state.loading,
     isAuthenticated: state.isAuthenticated
   })));
-
+  
   userSessionService();
   socketService();
 
@@ -38,6 +37,8 @@ function App() {
           },
         }}
       />
+      {/* <button onClick={() => setOpen(true)}>Xem cảm xúc</button> */}
+      {/* <ReactionDialog open={open} onClose={() => setOpen(false)} /> */}
       {loading ? (
         <></>
       ) : isAuthenticated ? (

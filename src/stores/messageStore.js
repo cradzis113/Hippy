@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
+import useSettingStore from './settingStore';
 
 const useMessageStore = create((set, get) => ({
     message: '',
@@ -11,6 +12,7 @@ const useMessageStore = create((set, get) => ({
     setMessageReplied: (messageReplied) => set({ messageReplied }),
     sendMessage: (userName, currentUser, socket) => {
         const { message, userReplied, messageReplied } = get();
+        const setHasEmittedSeen = useSettingStore.getState().setHasEmittedSeen;
         const time = moment().format('YYYY-MM-DD HH:mm');
 
         const newMessage = {
@@ -24,6 +26,7 @@ const useMessageStore = create((set, get) => ({
 
         socket.emit('privateChat', newMessage);
         socket.emit('sendMessage', newMessage);
+        setHasEmittedSeen(false);
 
         set({ message: '', userReplied: '', messageReplied: '' });
     }

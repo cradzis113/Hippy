@@ -300,7 +300,6 @@ const ConversationList = () => {
                         [targetUser]: uniqueMessages
                     };
                 });
-
                 setChatMessageHistory(prevHistory => {
                     if (Object.keys(prevHistory).length < 1) {
                         return { [targetUser]: [updatedMessages] }
@@ -367,6 +366,16 @@ const ConversationList = () => {
                 };
 
                 setChatMessageHistory(prevHistory => mergeChatMessages(prevHistory, data));
+            },
+            updateSeenStatus: (data) => {
+                setChatMessageHistory(prevHistory => {
+                    const i = {...prevHistory}
+                    console.log(i[data.user][data.indexSeen])
+                    delete i[data.user][data.indexSeen].seen
+                    
+                    _.last(i[data.user]).seen = true
+                    return i
+                })
             }
         };
 

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
-
+import useDataStore from "../../stores/dataStore";
 const VerticalCarousel = ({ slides }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [clicked, setClicked] = useState(false);
-
+    const setFocusMessage = useDataStore(state => state.setFocusMessage);
     const maxIndicators = 4;
     const totalSlides = slides.length;
 
@@ -13,6 +13,7 @@ const VerticalCarousel = ({ slides }) => {
     };
 
     const handleContentClick = () => {
+        setFocusMessage(slides[activeIndex]);
         setActiveIndex((prevIndex) => (prevIndex + 1) % totalSlides);
     };
 

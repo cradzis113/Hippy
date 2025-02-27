@@ -46,6 +46,9 @@ const MessageList = ({ user }) => {
     const activeSelectedMessage = useSettingStore(state => state.activeSelectedMessage);
     const isFirstLoad = useSettingStore(state => state.isFirstLoad);
     const setIsFirstLoad = useSettingStore(state => state.setIsFirstLoad);
+    const hasEmittedSeen = useSettingStore(state => state.hasEmittedSeen);
+    const setHasEmittedSeen = useSettingStore(state => state.setHasEmittedSeen);
+
     const {
         selectedMessages,
         setSelectedMessages,
@@ -69,12 +72,29 @@ const MessageList = ({ user }) => {
     const [showScrollButton, setShowScrollButton] = useState(false);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        if (!hasEmittedSeen) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+            const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
+            if (scrollContainer) {
+                handleScroll({ target: scrollContainer });
+            }
+        }
     };
 
     const handleScroll = (e) => {
         const scrollTop = Math.abs(e.target.scrollTop);
         setShowScrollButton(scrollTop > 100);
+
+        if (scrollTop > 100 && !hasEmittedSeen) {
+            socket.emit('updateSeenStatus', { currentUser: currentUser, currentChatUser: currentChatUser.userName, seen: true });
+            setHasEmittedSeen(true);
+        } else if (scrollTop <= 100 && hasEmittedSeen) {
+            socket.emit('updateSeenStatus', { currentUser: currentUser, currentChatUser: currentChatUser.userName, seen: false });
+            setHasEmittedSeen(false);
+        } else if (scrollTop <= 100 && !hasEmittedSeen) {
+            socket.emit('updateSeenStatus', { currentUser: currentUser, currentChatUser: currentChatUser.userName, seen: false });
+            setHasEmittedSeen(false);
+        }
     };
 
     useEffect(() => {
@@ -105,6 +125,7 @@ const MessageList = ({ user }) => {
 
     useEffect(() => {
         if (!socket) return;
+
         const handleMessageSent = (data) => {
             if (!data) {
                 return setMessages([]);
@@ -124,14 +145,43 @@ const MessageList = ({ user }) => {
                 if (_.isArray(data)) {
                     return _.values({ ..._.keyBy(prevMessages, 'id'), ..._.keyBy(data, 'id') });
                 }
-
                 return [...prevMessages, data];
             });
         };
 
+        const handleReactionUpdate = (data) => {
+            if (data.type === 'add') {
+                setCurrentUserMessageHistory(prevMessages => {
+                    const messageIndex = _.findIndex(prevMessages, msg => msg.id === data.messageId);
+                    if (messageIndex !== -1) {
+                        const updatedMessages = [...prevMessages];
+                        updatedMessages[messageIndex].reactions = {
+                            ...prevMessages[messageIndex].reactions,
+                            [data.currentUser]: data.emoji
+                        };
+                        return updatedMessages;
+                    }
+                    return prevMessages;
+                });
+            } else if (data.type === 'remove') {
+                setCurrentUserMessageHistory(prevMessages => {
+                    const messageIndex = _.findIndex(prevMessages, msg => msg.id === data.messageId);
+                    if (messageIndex !== -1) {
+                        const updatedMessages = [...prevMessages];
+                        delete updatedMessages[messageIndex].reactions[data.currentUser];
+                        return updatedMessages;
+                    }
+                    return prevMessages;
+                });
+            }
+        };
+
         socket.on('messageSent', handleMessageSent);
+        socket.on('reactionUpdate', handleReactionUpdate);
+
         return () => {
             socket.off('messageSent', handleMessageSent);
+            socket.off('reactionUpdate', handleReactionUpdate);
         };
     }, [socket]);
 
@@ -151,6 +201,29 @@ const MessageList = ({ user }) => {
         if (focusMessage) {
             setHighlightedMessageId(focusMessage.id);
             setIsExpanding(true);
+
+            let retryCount = 0;
+            const maxRetries = 5;
+
+            const scrollToMessage = () => {
+                const messageElement = document.getElementById(`message-${focusMessage.id}`);
+                if (messageElement) {
+                    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return true;
+                }
+                return false;
+            };
+
+            const attemptScroll = () => {
+                if (scrollToMessage() || retryCount >= maxRetries) {
+                    return;
+                }
+
+                retryCount++;
+                setTimeout(attemptScroll, 100);
+            };
+
+            attemptScroll();
 
             const shrinkTimer = setTimeout(() => {
                 setIsExpanding(false);
@@ -258,6 +331,7 @@ const MessageList = ({ user }) => {
                                     <React.Fragment key={msgIndex}>
                                         {!item?.revoked?.revokedBy?.includes(currentUser) && (
                                             <Box
+                                                id={`message-${item.id}`}
                                                 sx={{
                                                     width: '100%',
                                                     margin: '0 auto',
@@ -412,7 +486,7 @@ const MessageList = ({ user }) => {
                             >
                                 <ListItemText
                                     primary={
-                                        <Typography variant='body2' color='#e040fb' fontWeight={'bold'}>{userReplied}</Typography>
+                                        <Typography variant='body2' color='#e040fb' fontWeight='bold'>{userReplied}</Typography>
                                     }
                                     secondary={
                                         <Typography variant='body2' color='black'>{messageReplied}</Typography>

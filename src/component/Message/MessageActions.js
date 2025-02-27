@@ -26,7 +26,6 @@ import useSettingStore from '../../stores/settingStore';
 import useSocketStore from '../../stores/socketStore';
 import useDataStore from '../../stores/dataStore';
 import Picker from 'emoji-picker-react';
-import EmojiPicker from '@emoji-mart/react';
 
 const MessageActions = ({
     item,
@@ -39,9 +38,10 @@ const MessageActions = ({
     handlePopoverOpen,
     handlePopoverClose,
     handleRetrieveMessages,
+    openEmojiPicker,
+    setOpenEmojiPicker,
 }) => {
-
-    const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
+    const [emojiPlacement, setEmojiPlacement] = useState('bottom');
     const socket = useSocketStore(state => state.socket)
     const setActiveSelectedMessage = useSettingStore(state => state.setActiveSelectedMessage);
     const carouselSlides = useDataStore(state => state.carouselSlides);
@@ -85,6 +85,27 @@ const MessageActions = ({
         setSelectedMessages(prev => [...prev, item]);
     };
 
+    const handleEmojiClick = (emojiData) => {
+        socket.emit('reaction', {
+            messageId: item.id,
+            emoji: emojiData.emoji,
+            currentChatUser: currentChatUser.userName,
+            currentUser: currentUser,
+            type: 'add'
+        });
+        handlePopoverClose();
+    };
+
+    const handleEmojiPickerOpen = (event) => {
+        const buttonRect = event.currentTarget.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+
+        const newPlacement = spaceBelow <= 400 ? 'top' : 'bottom';
+        setEmojiPlacement(newPlacement);
+        setOpenEmojiPicker(event.currentTarget);
+    };
+
     return (
         <>
             <Popper
@@ -94,14 +115,14 @@ const MessageActions = ({
                 disablePortal={true}
                 onMouseEnter={() => handlePopoverOpen(currentPopoverAnchorEl, item.id)}
             >
-                <Box>
+                <Box display="flex" alignItems="center" gap={1}>
                     <Tooltip title="Trả lời" placement="top">
                         <IconButton onClick={() => handleReply(item)}>
                             <ReplyOutlinedIcon />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Trả lời" placement="top">
-                        <IconButton onClick={(e) => setOpenEmojiPicker(e.currentTarget)}>
+                        <IconButton onClick={handleEmojiPickerOpen}>
                             <SentimentSatisfiedAltOutlinedIcon />
                         </IconButton>
                     </Tooltip>
@@ -110,7 +131,6 @@ const MessageActions = ({
                             <MoreVertIcon />
                         </IconButton>
                     </Tooltip>
-
                     <Popover
                         open={Boolean(dotAnchor)}
                         anchorEl={dotAnchor}
@@ -118,7 +138,7 @@ const MessageActions = ({
                         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                         transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                     >
-                        <List >
+                        <List>
                             <ListItem disablePadding>
                                 <ListItemButton onClick={handlePinMessage}>
                                     <ListItemIcon sx={{ minWidth: 45 }}>
@@ -165,38 +185,13 @@ const MessageActions = ({
             </Popper>
             <Popper
                 open={Boolean(openEmojiPicker)}
-                onClose={() => setOpenEmojiPicker(null)}
                 anchorEl={openEmojiPicker}
-                placement="top-start"
-                disablePortal={false}
-                style={{
-                    zIndex: 9999,
-                    position: 'absolute'
-                }}
-                modifiers={[
-                    {
-                        name: 'offset',
-                        options: {
-                            offset: [0, 10],
-                        },
-                    },
-                    {
-                        name: 'preventOverflow',
-                        options: {
-                            boundary: window,
-                            altAxis: true,
-                            altBoundary: true,
-                        },
-                    },
-                    {
-                        name: 'flip',
-                        options: {
-                            fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'],
-                        },
-                    }
-                ]}
+                placement={emojiPlacement}
             >
-               // tôi cần tích hợp reaction trong message
+                <Picker
+                    reactionsDefaultOpen={true}
+                    onEmojiClick={handleEmojiClick}
+                />
             </Popper>
             <MessageRecallDialog
                 open={dialogOpen}
