@@ -151,7 +151,7 @@ const ConversationList = () => {
     const userData = authStore(state => state.userData)
     const setUserData = authStore(state => state.setUserData)
     const userName = authStore(state => state.userName);
-    
+
     const {
         setCurrentChatUser,
         setCarouselSlides,
@@ -320,7 +320,7 @@ const ConversationList = () => {
                     })
                 })
             },
-            readMessages: (updatedMessages, targetUser) => {
+            readMessages: (updatedMessages, targetUser, index) => {
                 setStoredMessages(prev => {
                     const uniqueMessages = _.uniqBy(
                         [...(prev[targetUser] || []), updatedMessages].reverse(),
@@ -340,6 +340,12 @@ const ConversationList = () => {
                     });
 
                     const mergedMessages = [...cleanMessages, updatedMessages]
+
+                    if (index) {
+                        mergedMessages[index].seen = true
+                        console.log(mergedMessages[index])
+                    }
+
                     const uniqueMessages = _.uniqBy(mergedMessages.reverse(), 'id').reverse();
                     return {
                         ...prevHistory,
@@ -369,10 +375,10 @@ const ConversationList = () => {
             },
             updateSeenStatus: (data) => {
                 setChatMessageHistory(prevHistory => {
-                    const i = {...prevHistory}
+                    const i = { ...prevHistory }
                     console.log(i[data.user][data.indexSeen])
                     delete i[data.user][data.indexSeen].seen
-                    
+
                     _.last(i[data.user]).seen = true
                     return i
                 })

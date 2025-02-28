@@ -81,7 +81,7 @@ const MessageList = ({ user }) => {
         }
     };
 
-    const handleScroll = (e) => {
+    const handleScroll = _.debounce((e) => {
         const scrollTop = Math.abs(e.target.scrollTop);
         setShowScrollButton(scrollTop > 100);
 
@@ -95,7 +95,7 @@ const MessageList = ({ user }) => {
             socket.emit('updateSeenStatus', { currentUser: currentUser, currentChatUser: currentChatUser.userName, seen: false });
             setHasEmittedSeen(false);
         }
-    };
+    }, 300);
 
     useEffect(() => {
         scrollToBottom();

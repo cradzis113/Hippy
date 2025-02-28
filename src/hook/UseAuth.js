@@ -56,7 +56,6 @@ const UseAuth = () => {
     try {
       const response = await fetchAPI(`${API_BASE}/api/auth`, 'POST', { code, email }, null, true);
       if (response.status === 200 || response.status === 201 || response.data.message === 'Login successful') {
-        console.log(response.data);
         localStorage.setItem('token', response.data.token);
         setIsAuthenticated(true);
         // setUserData(response.data); // cái này cho khác domain
