@@ -30,6 +30,165 @@ import useSettingStore from '../../stores/settingStore';
 import useDataStore from '../../stores/dataStore';
 import { useShallow } from 'zustand/react/shallow';
 
+const MessageDay = React.memo(({ 
+    dayGroup, 
+    currentUser, 
+    activeSelectedMessage, 
+    selectedMessages, 
+    setSelectedMessages,
+    setUserReplied,
+    setMessageReplied,
+    highlightedMessageId,
+    isExpanding
+}) => {
+    const hasVisibleMessageInDayGroup = dayGroup.messages.some(
+        message => !message?.revoked?.revokedBy?.includes(currentUser)
+    );
+
+    return (
+        <React.Fragment>
+            {hasVisibleMessageInDayGroup && (
+                <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
+                    <Chip label={moment(dayGroup.time).format('MMMM D')} sx={{ bgcolor: '#a5d6a7', color: 'background.paper' }} />
+                </Box>
+            )}
+            {dayGroup.messages.map((item, msgIndex) => (
+                <MessageRow 
+                    key={msgIndex}
+                    item={item}
+                    currentUser={currentUser}
+                    activeSelectedMessage={activeSelectedMessage}
+                    selectedMessages={selectedMessages}
+                    setSelectedMessages={setSelectedMessages}
+                    setUserReplied={setUserReplied}
+                    setMessageReplied={setMessageReplied}
+                    highlightedMessageId={highlightedMessageId}
+                    isExpanding={isExpanding}
+                />
+            ))}
+        </React.Fragment>
+    );
+});
+
+const MessageRow = React.memo(({ 
+    item, 
+    currentUser, 
+    activeSelectedMessage, 
+    selectedMessages, 
+    setSelectedMessages,
+    setUserReplied,
+    setMessageReplied,
+    highlightedMessageId,
+    isExpanding
+}) => {
+    const handleRadioChange = (event, message) => {
+        const isSelected = selectedMessages.some(msg => msg.id === message.id);
+        if (isSelected) {
+            setSelectedMessages(selectedMessages.filter(msg => msg.id !== message.id));
+        } else {
+            setSelectedMessages([...selectedMessages, message]);
+        }
+    };
+
+    return (
+        <React.Fragment>
+            {!item?.revoked?.revokedBy?.includes(currentUser) && (
+                <Box
+                    id={`message-${item.id}`}
+                    sx={{
+                        width: '100%',
+                        margin: '0 auto',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '@keyframes expandFromCenter': {
+                            '0%': {
+                                width: '0%',
+                            },
+                            '100%': {
+                                width: '40%',
+                            }
+                        },
+                        '@keyframes shrinkToCenter': {
+                            '0%': {
+                                width: '40%',
+                            },
+                            '100%': {
+                                width: '0%',
+                            }
+                        },
+                        '&::before, &::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            height: '100%',
+                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                            width: '0%',
+                        },
+                        '&::before': {
+                            right: '50%',
+                            borderTopLeftRadius: '10px',
+                            borderBottomLeftRadius: '10px',
+                            animation: highlightedMessageId === item.id ?
+                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                : 'none',
+                        },
+                        '&::after': {
+                            left: '50%',
+                            borderTopRightRadius: '10px',
+                            borderBottomRightRadius: '10px',
+                            animation: highlightedMessageId === item.id ?
+                                (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
+                                : 'none',
+                        }
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 650,
+                            padding: 1,
+                            display: 'flex',
+                            margin: '0 auto',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {activeSelectedMessage && (
+                            <Checkbox
+                                size="small"
+                                checked={selectedMessages.some(msg => msg.id === item.id)}
+                                onChange={(e) => handleRadioChange(e, item)}
+                                icon={<RadioButtonUnchecked />}
+                                checkedIcon={<RadioButtonChecked />}
+                                sx={{
+                                    marginRight: 1,
+                                    '& .MuiSvgIcon-root': {
+                                        fontSize: 20
+                                    }
+                                }}
+                            />
+                        )}
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: 'flex',
+                                justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
+                                borderRadius: '10px'
+                            }}
+                        >
+                            <MessageItem
+                                item={item}
+                                currentUser={currentUser}
+                                setUserReplied={setUserReplied}
+                                setMessageReplied={setMessageReplied}
+                            />
+                        </Box>
+                    </Box>
+                </Box>
+            )}
+        </React.Fragment>
+    );
+});
+
 const MessageList = ({ user }) => {
     const socket = useSocketStore(state => state.socket)
     const userName = authStore(state => state.userName);
@@ -232,7 +391,7 @@ const MessageList = ({ user }) => {
             const clearTimer = setTimeout(() => {
                 setHighlightedMessageId(null);
                 setFocusMessage(null);
-            }, 2300);
+            }, 2600);
 
             return () => {
                 clearTimeout(shrinkTimer);
@@ -270,23 +429,6 @@ const MessageList = ({ user }) => {
     const allMessages = messages.flatMap(item => item.messages);
     const recentVisibleMessage = allMessages.find(message => !message?.revoked?.revokedBy?.includes(currentUser));
 
-    const handleRadioChange = (event, message) => {
-        const isSelected = selectedMessages.some(msg => msg.id === message.id);
-        if (isSelected) {
-            setSelectedMessages(selectedMessages.filter(msg => msg.id !== message.id));
-        } else {
-            setSelectedMessages([...selectedMessages, message]);
-        }
-    };
-
-    const calculateMessagePosition = (item) => {
-        if (_.isEmpty(selectedMessages)) {
-            return item.senderUserName === currentUser ? 620 : 650
-        } else {
-            return 650
-        }
-    }
-
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '92vh', overflow: 'hidden' }}>
             <Box
@@ -315,118 +457,20 @@ const MessageList = ({ user }) => {
                         </Box>
                     )}
 
-                    {(!hasVisibleMessageInFirstGroup || recentVisibleMessage) && messages.map((dayGroup, index) => {
-                        const hasVisibleMessageInDayGroup = dayGroup.messages.some(
-                            message => !message?.revoked?.revokedBy?.includes(currentUser)
-                        );
-
-                        return (
-                            <React.Fragment key={index}>
-                                {hasVisibleMessageInDayGroup && (
-                                    <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', position: 'sticky', top: 0 }}>
-                                        <Chip label={moment(dayGroup.time).format('MMMM D')} sx={{ bgcolor: '#a5d6a7', color: 'background.paper' }} />
-                                    </Box>
-                                )}
-                                {dayGroup.messages.map((item, msgIndex) => (
-                                    <React.Fragment key={msgIndex}>
-                                        {!item?.revoked?.revokedBy?.includes(currentUser) && (
-                                            <Box
-                                                id={`message-${item.id}`}
-                                                sx={{
-                                                    width: '100%',
-                                                    margin: '0 auto',
-                                                    position: 'relative',
-                                                    overflow: 'hidden',
-                                                    '@keyframes expandFromCenter': {
-                                                        '0%': {
-                                                            width: '0%',
-                                                        },
-                                                        '100%': {
-                                                            width: '40%',
-                                                        }
-                                                    },
-                                                    '@keyframes shrinkToCenter': {
-                                                        '0%': {
-                                                            width: '40%',
-                                                        },
-                                                        '100%': {
-                                                            width: '0%',
-                                                        }
-                                                    },
-                                                    '&::before, &::after': {
-                                                        content: '""',
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        height: '100%',
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                                                        width: '0%',
-                                                    },
-                                                    '&::before': {
-                                                        right: '50%',
-                                                        borderTopLeftRadius: '10px',
-                                                        borderBottomLeftRadius: '10px',
-                                                        animation: highlightedMessageId === item.id ?
-                                                            (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
-                                                            : 'none',
-                                                    },
-                                                    '&::after': {
-                                                        left: '50%',
-                                                        borderTopRightRadius: '10px',
-                                                        borderBottomRightRadius: '10px',
-                                                        animation: highlightedMessageId === item.id ?
-                                                            (isExpanding ? 'expandFromCenter 0.3s ease forwards' : 'shrinkToCenter 0.3s ease forwards')
-                                                            : 'none',
-                                                    }
-                                                }}
-                                            >
-                                                <Box
-                                                    sx={{
-                                                        width: calculateMessagePosition(item),
-                                                        padding: 1,
-                                                        display: 'flex',
-                                                        margin: '0 auto',
-                                                        flexDirection: 'row',
-                                                        alignItems: 'center',
-                                                    }}
-                                                >
-                                                    {activeSelectedMessage && (
-                                                        <Checkbox
-                                                            size="small"
-                                                            checked={selectedMessages.some(msg => msg.id === item.id)}
-                                                            onChange={(e) => handleRadioChange(e, item)}
-                                                            icon={<RadioButtonUnchecked />}
-                                                            checkedIcon={<RadioButtonChecked />}
-                                                            sx={{
-                                                                marginRight: 1,
-                                                                '& .MuiSvgIcon-root': {
-                                                                    fontSize: 20
-                                                                }
-                                                            }}
-                                                        />
-                                                    )}
-                                                    <Box
-                                                        sx={{
-                                                            flex: 1,
-                                                            display: 'flex',
-                                                            justifyContent: item.senderUserName === currentUser ? 'flex-end' : 'flex-start',
-                                                            borderRadius: '10px'
-                                                        }}
-                                                    >
-                                                        <MessageItem
-                                                            item={item}
-                                                            currentUser={currentUser}
-                                                            setUserReplied={setUserReplied}
-                                                            setMessageReplied={setMessageReplied}
-                                                        />
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </React.Fragment>
-                        );
-                    })}
+                    {(!hasVisibleMessageInFirstGroup || recentVisibleMessage) && messages.map((dayGroup, index) => (
+                        <MessageDay
+                            key={index}
+                            dayGroup={dayGroup}
+                            currentUser={currentUser}
+                            activeSelectedMessage={activeSelectedMessage}
+                            selectedMessages={selectedMessages}
+                            setSelectedMessages={setSelectedMessages}
+                            setUserReplied={setUserReplied}
+                            setMessageReplied={setMessageReplied}
+                            highlightedMessageId={highlightedMessageId}
+                            isExpanding={isExpanding}
+                        />
+                    ))}
                     {showScrollButton && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'sticky', bottom: 3 }}>
                             <IconButton

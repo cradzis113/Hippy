@@ -13,6 +13,7 @@ const useMessageStore = create((set, get) => ({
     sendMessage: (userName, currentUser, socket) => {
         const { message, userReplied, messageReplied } = get();
         const setHasEmittedSeen = useSettingStore.getState().setHasEmittedSeen;
+        const hasEmittedSeen = useSettingStore.getState().hasEmittedSeen;
         const time = moment().format('YYYY-MM-DD HH:mm');
 
         const newMessage = {
@@ -21,7 +22,8 @@ const useMessageStore = create((set, get) => ({
             message: message,
             recipientUserName: userName,
             senderUserName: currentUser,
-            replyInfo: (messageReplied && userReplied) ? { messageReplied, userReplied } : undefined
+            replyInfo: (messageReplied && userReplied) ? { messageReplied, userReplied } : undefined,
+            ...(hasEmittedSeen && { hasEmittedSeen: false })
         };
 
         socket.emit('privateChat', newMessage);

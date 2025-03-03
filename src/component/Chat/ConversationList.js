@@ -356,7 +356,22 @@ const ConversationList = () => {
             recipientUserUpdate: (data) => {
                 setUserData({ data: { user: data } })
             },
-            carouselDataUpdate: setCarouselSlides,
+            carouselDataUpdate: (data) => {
+                const currentState = useDataStore.getState();
+                console.log(data)
+                if (data.type === 'pin') {
+                    console.log(2)
+                    const uniqueMessages = _.uniqBy(
+                        [...currentState.carouselSlides, data],
+                        'id'
+                    );
+                    setCarouselSlides(uniqueMessages);
+                } else {
+                    console.log(1)
+                    const filteredMessages = _.filter(currentState.carouselSlides, (msg) => msg.id !== data.id)
+                    setCarouselSlides(filteredMessages);
+                }
+            },
             unseenMessages: (data) => {
                 const mergeChatMessages = (currentHistory, newData) => {
                     return Object.keys(currentHistory).reduce((acc, curr) => {
@@ -403,6 +418,10 @@ const ConversationList = () => {
             });
         };
     }, [socket, messageQueue]);
+
+    useEffect(() => {
+        console.log(carouselSlides)
+    }, [carouselSlides])
 
     useEffect(() => {
         const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {

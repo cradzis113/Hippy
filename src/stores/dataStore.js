@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 
 const useDataStore = create((set) => ({
-  // Search and carousel states
   searchResult: [],
   setSearchResult: (result) => set({ searchResult: result }),
   carouselSlides: [],
   setCarouselSlides: (slides) => set({ carouselSlides: slides }),
 
-  // Chat related states
   currentChatUser: {},
   setCurrentChatUser: (user) => set({ currentChatUser: user }),
   selectedMessages: [],

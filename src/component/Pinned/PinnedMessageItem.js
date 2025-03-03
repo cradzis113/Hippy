@@ -94,42 +94,44 @@ const PinnedMessageItem = () => {
                                 flexDirection: item.senderUserName === currentUser ? "row-reverse" : "row",
                             }}
                         >
-                            <Box
-                                onMouseEnter={(event) => {
-                                    setHoveredMessageId(item.id);
-                                    setAnchorEl(event.currentTarget);
-                                }}
-                                onMouseLeave={() => {
-                                    setHoveredMessageId(null);
-                                    setAnchorEl(null);
-                                }}
-                                sx={{
-                                    backgroundColor: item.senderUserName === currentUser ? green[400] : "background.paper",
-                                    padding: "6px 12px",
-                                    borderRadius: "10px",
-                                    maxWidth: "70%",
-                                }}
-                            >
-                                <Typography
-                                    variant="body1"
+                            {!item.revoked?.revokedBy?.includes(userName) && (
+                                <Box
+                                    onMouseEnter={(event) => {
+                                        setHoveredMessageId(item.id);
+                                        setAnchorEl(event.currentTarget);
+                                    }}
+                                    onMouseLeave={() => {
+                                        setHoveredMessageId(null);
+                                        setAnchorEl(null);
+                                    }}
                                     sx={{
-                                        color: item.senderUserName === currentUser ? "white" : "black",
-                                        wordBreak: "break-word",
+                                        backgroundColor: item.senderUserName === currentUser ? green[400] : "background.paper",
+                                        padding: "6px 12px",
+                                        borderRadius: "10px",
+                                        maxWidth: "70%",
                                     }}
                                 >
-                                    {item.message}
-                                </Typography>
-                                <Popper
-                                    open={hoveredMessageId === item.id}
-                                    anchorEl={anchorEl}
-                                    placement="right"
-                                    disablePortal={true}
-                                >
-                                    <IconButton onClick={() => handleFocusMessage(item)}>
-                                        <ThreeSixtyOutlinedIcon />
-                                    </IconButton>
-                                </Popper>
-                            </Box>
+                                    <Typography
+                                        variant="body1"
+                                        sx={{
+                                            color: item.senderUserName === currentUser ? "white" : "black",
+                                            wordBreak: "break-word",
+                                        }}
+                                    >
+                                        {item.message}
+                                    </Typography>
+                                    <Popper
+                                        open={hoveredMessageId === item.id}
+                                        anchorEl={anchorEl}
+                                        placement="right"
+                                        disablePortal={true}
+                                    >
+                                        <IconButton onClick={() => handleFocusMessage(item)}>
+                                            <ThreeSixtyOutlinedIcon />
+                                        </IconButton>
+                                    </Popper>
+                                </Box>
+                            )}
                         </Box>
                     ))}
                 </Box>
