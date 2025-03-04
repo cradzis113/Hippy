@@ -11,14 +11,15 @@ const VerticalCarousel = ({ slides }) => {
     const setFocusMessage = useDataStore(state => state.setFocusMessage);
 
     const maxIndicators = 4;
-    const totalSlides = slides.filter(slide => !slide.revoked?.revokedBy?.includes(userName)).length;
-
+    const filteredSlides = slides.filter(slide => !slide.revoked?.revokedBy?.includes(userName));
+    const totalSlides = filteredSlides.length;
+    
     const handleSlideChange = (index) => {
         setActiveIndex(index);
     };
 
     const handleContentClick = () => {
-        setFocusMessage(slides[activeIndex]);
+        setFocusMessage(filteredSlides[activeIndex]);
         setActiveIndex((prevIndex) => (prevIndex + 1) % totalSlides);
     };
 
@@ -100,7 +101,7 @@ const VerticalCarousel = ({ slides }) => {
                             }}
                             sx={{
                                 width: "2.5px",
-                                height: getIndicatorHeight(slides.filter(slide => !slide.revoked?.revokedBy?.includes(userName)), index, startIndex, activeIndex),
+                                height: getIndicatorHeight(filteredSlides, index, startIndex, activeIndex),
                                 backgroundColor: index + startIndex === activeIndex ? "#2979ff" : "#ccc",
                                 cursor: "pointer",
                                 transition: "all 0.3s",
@@ -111,49 +112,47 @@ const VerticalCarousel = ({ slides }) => {
                 })}
             </Box>
             <Box>
-                {slides.map((slide, index) => (
+                {filteredSlides.map((slide, index) => (
                     <Box
                         key={index}
                         sx={{
                             display: activeIndex === index ? "block" : "none",
                         }}
-                    >
-                        {!slide.revoked?.revokedBy?.includes(userName) && (
-                            <Box
+                    >   
+                        <Box
+                            sx={{
+                                width: 180,
+                                overflow: 'hidden',
+                                userSelect: 'none',
+                                textAlign: 'left',
+                            }}
+                        >
+                            <Typography
+                                variant="body2"
+                                gutterBottom
                                 sx={{
-                                    width: 180,
+                                    maxWidth: 150,
+                                    color: '#2979ff',
                                     overflow: 'hidden',
-                                    userSelect: 'none',
-                                    textAlign: 'left',
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis',
                                 }}
                             >
-                                <Typography
-                                    variant="body2"
-                                    gutterBottom
-                                    sx={{
-                                        maxWidth: 150,
-                                        color: '#2979ff',
-                                        overflow: 'hidden',
-                                        whiteSpace: 'nowrap',
-                                        textOverflow: 'ellipsis',
-                                    }}
-                                >
-                                    {index === 0 ? 'Pinned Message' : `Pinned Message #${index}`}
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    sx={{
-                                        maxWidth: 250,
-                                        color: 'black',
-                                        overflow: 'hidden',
-                                        whiteSpace: 'nowrap',
-                                        textOverflow: 'ellipsis',
-                                    }}
-                                >
-                                    {slide.message}
-                                </Typography>
-                            </Box>
-                        )}
+                                {index === 0 ? 'Pinned Message' : `Pinned Message #${index}`}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    maxWidth: 250,
+                                    color: 'black',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis',
+                                }}
+                            >
+                                {slide.message}
+                            </Typography>
+                        </Box>
                     </Box>
                 ))}
             </Box>

@@ -343,7 +343,6 @@ const ConversationList = () => {
 
                     if (index) {
                         mergedMessages[index].seen = true
-                        console.log(mergedMessages[index])
                     }
 
                     const uniqueMessages = _.uniqBy(mergedMessages.reverse(), 'id').reverse();
@@ -358,16 +357,13 @@ const ConversationList = () => {
             },
             carouselDataUpdate: (data) => {
                 const currentState = useDataStore.getState();
-                console.log(data)
                 if (data.type === 'pin') {
-                    console.log(2)
                     const uniqueMessages = _.uniqBy(
                         [...currentState.carouselSlides, data],
                         'id'
                     );
                     setCarouselSlides(uniqueMessages);
                 } else {
-                    console.log(1)
                     const filteredMessages = _.filter(currentState.carouselSlides, (msg) => msg.id !== data.id)
                     setCarouselSlides(filteredMessages);
                 }
@@ -391,7 +387,6 @@ const ConversationList = () => {
             updateSeenStatus: (data) => {
                 setChatMessageHistory(prevHistory => {
                     const i = { ...prevHistory }
-                    console.log(i[data.user][data.indexSeen])
                     delete i[data.user][data.indexSeen].seen
 
                     _.last(i[data.user]).seen = true
