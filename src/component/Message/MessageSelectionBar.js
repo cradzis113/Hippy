@@ -71,7 +71,7 @@ const MessageSelectionBar = ({
     }
     setSelectedMessages([]);
     setActiveSelectedMessage(false);
-    socket.emit('deleteMessage', updatedData);
+    socket.emit('messageDelete', updatedData);
   };
 
   const handleOpenDialog = () => {

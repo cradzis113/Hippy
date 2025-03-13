@@ -5,6 +5,7 @@ import authStore from "./stores/authStore";
 import { useShallow } from "zustand/react/shallow";
 import socketService from "./services/socketService";
 import userSessionService from "./services/userSessionService";
+
 function App() {
   const { loading, isAuthenticated } = authStore(useShallow(state => ({
     setIsAuthenticated: state.setIsAuthenticated,

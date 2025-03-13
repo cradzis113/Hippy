@@ -1,17 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import useDataStore from "../../stores/dataStore";
 import useAuthStore from "../../stores/authStore";
+import useSocketStore from "../../stores/socketStore";
 
-const VerticalCarousel = ({ slides }) => {
+const VerticalCarousel = () => {
     const [clicked, setClicked] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const userName = useAuthStore(state => state.userName);
     const setFocusMessage = useDataStore(state => state.setFocusMessage);
-
+    const socket = useSocketStore(state => state.socket);
+    const carouselSlides = useDataStore(state => state.carouselSlides);
+    const setCarouselSlides = useDataStore(state => state.setCarouselSlides);
+    
+    const filteredSlides = carouselSlides.filter(slide => !slide.revoked?.revokedBy?.includes(userName) && !slide.revoked?.revokedBoth);
     const maxIndicators = 4;
-    const filteredSlides = slides.filter(slide => !slide.revoked?.revokedBy?.includes(userName));
     const totalSlides = filteredSlides.length;
     
     const handleSlideChange = (index) => {
@@ -59,6 +63,20 @@ const VerticalCarousel = ({ slides }) => {
 
         return "5px";
     };
+
+    useEffect(() => {
+        socket.on('messagePinned', (data) => {
+            console.log(data);
+            const newSlides = [...carouselSlides];
+            newSlides.splice(data.index, 1);
+            setCarouselSlides(newSlides);
+            console.log(newSlides);
+        })
+
+        return () => {
+            socket.off('messagePinned');
+        }
+    }, [socket, carouselSlides])
 
     return (
         <Box

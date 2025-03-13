@@ -335,11 +335,11 @@ const MessageList = ({ user }) => {
             }
         };
 
-        socket.on('messageSent', handleMessageSent);
+        socket.on('chatMessageSent', handleMessageSent);
         socket.on('reactionUpdate', handleReactionUpdate);
 
         return () => {
-            socket.off('messageSent', handleMessageSent);
+            socket.off('chatMessageSent', handleMessageSent);
             socket.off('reactionUpdate', handleReactionUpdate);
         };
     }, [socket]);

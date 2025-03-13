@@ -182,7 +182,7 @@ const ConversationList = () => {
     const handleClick = (userName) => {
         if (!socket) return;
 
-        socket.emit('enterChat', { userName, currentUserName })
+        socket.emit('chatEnter', { userName, currentUserName })
         socket.emit('search', userName, (error, results) => {
             if (error) {
                 console.error('Search error:', error);
@@ -280,7 +280,7 @@ const ConversationList = () => {
     useEffect(() => {
         if (!socket || !userData?.data?.user) return;
         const handlers = {
-            notification: setNewMessage,
+            messageNotification: setNewMessage,
             addMessagesToQueue: (newMessages) => {
                 setMessageQueue((prevQueue) => _.uniq([...prevQueue, ...newMessages]));
             },
@@ -288,7 +288,7 @@ const ConversationList = () => {
                 const updatedQueue = _.without(messageQueue, messageToRemove);
                 setMessageQueue(updatedQueue);
             },
-            messageHistoryUpdate: (updatedMessages, targetUser) => {
+            chatHistoryUpdate: (updatedMessages, targetUser) => {
                 setStoredMessages(prev => {
                     const uniqueMessages = _.uniqBy(
                         [...(prev[targetUser] || []), updatedMessages],
@@ -320,7 +320,7 @@ const ConversationList = () => {
                     })
                 })
             },
-            readMessages: (updatedMessages, targetUser, index) => {
+            chatReadMessages: (updatedMessages, targetUser, index) => {
                 setStoredMessages(prev => {
                     const uniqueMessages = _.uniqBy(
                         [...(prev[targetUser] || []), updatedMessages].reverse(),
@@ -352,7 +352,7 @@ const ConversationList = () => {
                     };
                 });
             },
-            recipientUserUpdate: (data) => {
+            chatRecipientUpdate: (data) => {
                 setUserData({ data: { user: data } })
             },
             carouselDataUpdate: (data) => {
@@ -413,10 +413,6 @@ const ConversationList = () => {
             });
         };
     }, [socket, messageQueue]);
-
-    useEffect(() => {
-        console.log(carouselSlides)
-    }, [carouselSlides])
 
     useEffect(() => {
         const result = _.mergeWith({}, chatMessageHistory, storedMessages, (objValue, srcValue) => {

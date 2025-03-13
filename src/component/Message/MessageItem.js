@@ -30,7 +30,7 @@ const MessageItem = ({
 
     const handleRetrieveMessages = (messageData, visibilityOption) => {
         const updatedData = { ...messageData, currentUser, visibilityOption };
-        socket.emit('deleteMessage', updatedData);
+        socket.emit('messageDelete', updatedData);
         handlePopoverClose();
     };
 

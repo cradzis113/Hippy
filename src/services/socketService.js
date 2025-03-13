@@ -15,7 +15,7 @@ export default function socketService() {
         setSocket(socketInstance);
 
         socketInstance.on('connect', () => {
-            socketInstance.emit('connectionUpdate', { userName, socketId: socketInstance.id })
+            socketInstance.emit('userConnectionUpdate', { userName, socketId: socketInstance.id })
         });
 
         return () => {

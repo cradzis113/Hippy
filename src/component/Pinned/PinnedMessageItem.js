@@ -94,7 +94,7 @@ const PinnedMessageItem = () => {
                                 flexDirection: item.senderUserName === currentUser ? "row-reverse" : "row",
                             }}
                         >
-                            {!item.revoked?.revokedBy?.includes(userName) && (
+                            {!item.revoked?.revokedBy?.includes(userName) && !item.revoked?.revokedBoth && (
                                 <Box
                                     onMouseEnter={(event) => {
                                         setHoveredMessageId(item.id);

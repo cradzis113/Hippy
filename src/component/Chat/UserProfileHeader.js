@@ -35,7 +35,7 @@ const UserProfileHeader = ({ user }) => {
     const carouselSlides = useDataStore(state => state.carouselSlides);
     const setPinnedViewActive = useSettingStore(state => state.setPinnedViewActive);
     const userName = authStore(state => state.userName);
-    
+
     const currentUser = userName;
     const searchInputRef = useRef(null);
     const [searchState, setSearchState] = useState({
@@ -93,8 +93,8 @@ const UserProfileHeader = ({ user }) => {
             setUserStatus(data)
         };
 
-        socket.on('userStatus', handleUserStatusUpdate);
-        return () => socket.off('userStatus', handleUserStatusUpdate);
+        socket.on('chatUserStatus', handleUserStatusUpdate);
+        return () => socket.off('chatUserStatus', handleUserStatusUpdate);
     }, [socket, user]);
 
     const getStatusMessage = () => {
@@ -286,21 +286,21 @@ const UserProfileHeader = ({ user }) => {
                 {!searchState.isActive && (
                     <>
                         {Boolean(userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser]) ? (
-                            userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && <VerticalCarousel slides={carouselSlides} />
+                            userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] && <VerticalCarousel />
                         ) : (
                             carouselSlides.length > 0 &&
                             (carouselSlides[0].recipientUserName === user?.userName || carouselSlides[0].recipientUserName === currentUser) &&
                             (carouselSlides[0].senderUserName === user?.userName || carouselSlides[0].senderUserName === currentUser) &&
-                            <VerticalCarousel slides={carouselSlides} />
+                            <VerticalCarousel />
                         )}
                         {Boolean(userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser]) ? (
                             userData?.data?.user?.pinnedInfo?.[user?.userName] && user?.pinnedInfo?.[currentUser] &&
-                            carouselSlides?.length > 1 &&
+                            carouselSlides?.filter(slide => !slide.revoked?.revokedBy?.includes(userName) && !slide.revoked?.revokedBoth)?.length > 1 &&
                             <IconButton onClick={() => setPinnedViewActive(true)}>
                                 <PushPinOutlinedIcon />
                             </IconButton>
                         ) : (
-                            carouselSlides.length > 1 &&
+                            carouselSlides?.filter(slide => !slide.revoked?.revokedBy?.includes(userName) && !slide.revoked?.revokedBoth)?.length > 1 &&
                             (carouselSlides[0].recipientUserName === user?.userName || carouselSlides[0].recipientUserName === currentUser) &&
                             (carouselSlides[0].senderUserName === user?.userName || carouselSlides[0].senderUserName === currentUser) &&
                             <IconButton onClick={() => setPinnedViewActive(true)}>

@@ -26,7 +26,7 @@ const useMessageStore = create((set, get) => ({
             ...(hasEmittedSeen && { hasEmittedSeen: false })
         };
 
-        socket.emit('privateChat', newMessage);
+        socket.emit('chatPrivate', newMessage);
         socket.emit('sendMessage', newMessage);
         setHasEmittedSeen(false);
 
