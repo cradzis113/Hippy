@@ -70,7 +70,7 @@ const VerticalCarousel = () => {
             const newSlides = [...carouselSlides];
             newSlides.splice(data.index, 1);
             setCarouselSlides(newSlides);
-            console.log(newSlides);
+            // console.log(newSlides);
         })
 
         return () => {
