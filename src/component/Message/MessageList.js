@@ -286,6 +286,7 @@ const MessageList = ({ user }) => {
         if (!socket) return;
 
         const handleMessageSent = (data) => {
+            console.log(data);
             if (!data) {
                 return setMessages([]);
             }

@@ -3,6 +3,8 @@ import { Box, Typography } from "@mui/material";
 import useDataStore from "../../stores/dataStore";
 import useAuthStore from "../../stores/authStore";
 import useSocketStore from "../../stores/socketStore";
+import _ from "lodash";
+import { CollectionsBookmark } from "@mui/icons-material";
 
 const VerticalCarousel = () => {
     const [clicked, setClicked] = useState(false);
@@ -13,11 +15,11 @@ const VerticalCarousel = () => {
     const socket = useSocketStore(state => state.socket);
     const carouselSlides = useDataStore(state => state.carouselSlides);
     const setCarouselSlides = useDataStore(state => state.setCarouselSlides);
-    
+
     const filteredSlides = carouselSlides.filter(slide => !slide.revoked?.revokedBy?.includes(userName) && !slide.revoked?.revokedBoth);
     const maxIndicators = 4;
     const totalSlides = filteredSlides.length;
-    
+
     const handleSlideChange = (index) => {
         setActiveIndex(index);
     };
@@ -66,11 +68,12 @@ const VerticalCarousel = () => {
 
     useEffect(() => {
         socket.on('messagePinned', (data) => {
-            console.log(data);
             const newSlides = [...carouselSlides];
-            newSlides.splice(data.index, 1);
-            setCarouselSlides(newSlides);
-            // console.log(newSlides);
+                const h = newSlides.filter(i => {
+                return !data.some(u => u.id === i.id)
+            });
+            console.log(data,' s')
+            console.log(newSlides)
         })
 
         return () => {
@@ -136,7 +139,7 @@ const VerticalCarousel = () => {
                         sx={{
                             display: activeIndex === index ? "block" : "none",
                         }}
-                    >   
+                    >
                         <Box
                             sx={{
                                 width: 180,
